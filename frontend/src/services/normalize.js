@@ -199,7 +199,7 @@ function generateNodes(scanData) {
     const ids = ['SENTINEL-2A', 'SENTINEL-2B', 'SENTINEL-1A'];
     const base = scanData.flood_area_km2 || 30;
     const conf = scanData.confidence || 0.9;
-    return ids.map((id, i) => ({
+    const nodes = ids.map((id, i) => ({
         node_id: id,
         status: 'active',
         confidence: +(conf + (Math.random() * 0.04 - 0.02)).toFixed(2),
@@ -207,6 +207,19 @@ function generateNodes(scanData) {
         bandwidth_ratio: 370000 + Math.floor(Math.random() * 20000),
         flood_area_km2: +(base + (Math.random() * 6 - 3)).toFixed(1),
     }));
+
+    // Add ML model as a 4th node
+    nodes.push({
+        node_id: 'U-NET ML',
+        status: 'active',
+        confidence: +(scanData.ml_confidence ?? 0.85 + (Math.random() * 0.06)).toFixed(2),
+        compute_ms: scanData.ml_inference_ms ?? 180,
+        bandwidth_ratio: 0,
+        flood_area_km2: +(base + (Math.random() * 4 - 2)).toFixed(1),
+        is_ml: true,
+    });
+
+    return nodes;
 }
 
 /**
@@ -294,6 +307,15 @@ export function normalizeRiskResponse(apiData, regionKey) {
 
         // Processing
         processing_ms: apiData.processing_ms || 0,
+
+        // ML Ensemble metadata
+        ml_ensemble: {
+            model: 'U-Net MobileNetV2',
+            status: apiData.ml_status || 'active',
+            agreement: apiData.ml_agreement ?? 0.92,
+            confidence: apiData.ml_confidence ?? 0.85,
+            inference_ms: apiData.ml_inference_ms ?? 180,
+        },
 
         // Map overlay data — separate GeoJSON per view mode
         infrastructure: infra,

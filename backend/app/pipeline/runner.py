@@ -11,6 +11,7 @@ from app.pipeline.satellite_ingestion import fetch_sentinel2, fetch_sentinel1
 from app.pipeline.ndwi import compute_ndwi, detect_flood, compute_flood_probability
 from app.pipeline.nddi import compute_ndvi, compute_nddi, classify_drought
 from app.pipeline.sar import compute_sar_flood_mask, fuse_masks, should_use_sar_primary
+from app.pipeline.ml_detector import predict_flood_mask, ensemble_with_physics
 from app.pipeline.change_detection import detect_change
 from app.pipeline.infrastructure import fetch_infrastructure, intersect_with_flood, count_at_risk
 from app.pipeline.forecast import fetch_openmeteo_forecast, compute_ndwi_trend, compute_forecast_score, compute_drought_trajectory
@@ -28,6 +29,7 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
     1. SATELLITE_INGESTION
     2. NDWI_COMPUTATION
     3. SAR_ANALYSIS
+    3.5. ML_ENSEMBLE (U-Net deep learning flood detection)
     4. CHANGE_DETECTION
     5. OEC_INFERENCE
     6. CONSENSUS
@@ -109,6 +111,59 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
             "cloud_pct": round(cloud, 1),
             "fused_flood_area_km2": round(fused_flood_area, 2),
         })
+
+        # ── Step 3.5: ML ENSEMBLE (Deep Learning) ─────────────────
+        lid = await db.log_step(scan_id, "ML_ENSEMBLE", 3, "running")
+        try:
+            ml_result = predict_flood_mask(
+                vv=s1_data["vv"],
+                green=s2_data["event"]["green"],
+                nir=s2_data["event"]["nir"],
+            )
+
+            # Ensemble ML with physics-based mask
+            ensemble_result = ensemble_with_physics(
+                physics_mask=combined_mask,
+                ml_result=ml_result,
+                physics_confidence=0.9,  # base physics confidence
+            )
+
+            # Update masks if ML contributed
+            if ensemble_result["ml_contributed"]:
+                combined_mask = ensemble_result["ensemble_mask"]
+                fused_flood_area = float(np.sum(combined_mask) * pixel_area_km2)
+
+            ml_agreement = ensemble_result["agreement_ratio"]
+            ml_status = ml_result["status"]
+            ml_inference_ms = ml_result["inference_ms"]
+            ml_flood_fraction = ml_result["ml_flood_fraction"]
+            ml_confidence = ml_result["ml_confidence"]
+
+            await db.complete_log_step(lid, output_summary={
+                "ml_status": ml_status,
+                "ml_inference_ms": ml_inference_ms,
+                "ml_flood_fraction": round(ml_flood_fraction, 4),
+                "ml_confidence": round(ml_confidence, 3),
+                "agreement_ratio": ml_agreement,
+                "ensemble_confidence": round(ensemble_result["ensemble_confidence"], 3),
+                "ml_contributed": ensemble_result["ml_contributed"],
+                "model": "U-Net MobileNetV2 (ImageNet)",
+            })
+            print(f"[PIPELINE] ML Ensemble: agreement={ml_agreement:.1%}, "
+                  f"flood_area={fused_flood_area:.2f}km², status={ml_status}")
+
+        except Exception as ml_err:
+            # ML is optional — if it fails, continue with physics-only
+            ml_agreement = 1.0
+            ml_status = f"error: {str(ml_err)}"
+            ml_inference_ms = 0
+            ml_flood_fraction = 0.0
+            ml_confidence = 0.0
+            await db.complete_log_step(lid, output_summary={
+                "ml_status": ml_status,
+                "note": "ML failed, using physics-only detection",
+            })
+            print(f"[PIPELINE] ML skipped (error): {ml_err}")
 
         # ── Step 4: CHANGE DETECTION ───────────────────────────
         lid = await db.log_step(scan_id, "CHANGE_DETECTION", 4, "running")
