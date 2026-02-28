@@ -13,12 +13,6 @@
 [![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)](https://leafletjs.com)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 
-<br />
-
-![Tests](https://img.shields.io/badge/Tests-69_Passed-4ade80?style=flat-square&logo=pytest&logoColor=white)
-![Coverage](https://img.shields.io/badge/Coverage-94%25-22c55e?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-a78bfa?style=flat-square)
-![Status](https://img.shields.io/badge/Status-Production_Ready-38bdf8?style=flat-square)
 
 <br />
 
@@ -206,21 +200,6 @@ cp .env.example .env
 
 <br />
 
-## 🧪 Testing
-
-The backend ships with **69 automated test cases** covering API endpoints, pipeline modules, and validation logic.
-
-```bash
-cd backend
-python -m pytest tests/ -v --tb=short
-```
-
-| Suite | Tests | Covers |
-|-------|:-----:|--------|
-| `test_api.py` | 35 | All REST endpoints, error handling, validation |
-| `test_pipeline.py` | 34 | NDWI, SAR, NDDI, change detection, risk scoring, forecast |
-
-<br />
 
 ## 📂 Project Structure
 
@@ -264,18 +243,6 @@ TerraVeil/
 
 <br />
 
-## 🌍 Supported Regions
-
-TerraVeil comes pre-configured with three high-risk regions, plus support for any custom location:
-
-| Region | Coordinates | Risk Profile |
-|--------|:-----------:|-------------|
-| 🇮🇳 **Kolhapur, Maharashtra** | 16.7°N, 74.2°E | Monsoon flooding, Panchganga River basin |
-| 🇮🇳 **Chennai, Tamil Nadu** | 13.1°N, 80.3°E | Cyclonic flooding, coastal surge |
-| 🇵🇰 **Sindh, Pakistan** | 25.4°N, 68.4°E | Indus River flooding, monsoon extremes |
-| 📍 **Custom Location** | _User-defined_ | Any global coordinate with lat/lon input |
-
-<br />
 
 ## 🔑 Key Technologies
 
