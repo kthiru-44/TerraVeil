@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import MapPanel from '../map/MapPanel.jsx';
 import FloodOverlay from '../map/FloodOverlay.jsx';
@@ -33,6 +33,23 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
     const region = regionPresets?.[regionKey];
     const mapCenter = scanConfig?.center || region?.center || [16.7, 74.2];
 
+    // Pick the right GeoJSON overlay for the active view mode
+    const activeGeoJson = useMemo(() => {
+        switch (viewMode) {
+            case 'before': return scanData.before_geojson || { type: 'FeatureCollection', features: [] };
+            case 'now': return scanData.flood_geojson;
+            case 'forecast': return scanData.forecast_geojson || scanData.flood_geojson;
+            case 'drought': return scanData.drought_geojson || scanData.flood_geojson;
+            default: return scanData.flood_geojson;
+        }
+    }, [viewMode, scanData]);
+
+    // Section title changes per mode
+    const sectionTitle = viewMode === 'before' ? 'Baseline (Pre-Event)'
+        : viewMode === 'forecast' ? '72H Forecast Projection'
+            : viewMode === 'drought' ? 'Drought Severity Zone'
+                : 'Analysis Region';
+
     return (
         <motion.div className="dashboard" variants={containerVariants} initial="hidden" animate="visible">
             <div className="dashboard-body">
@@ -40,13 +57,15 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
                 {/* ── Map ── */}
                 <motion.div className="dashboard-map" variants={itemVariants}>
                     <div className="map-header">
-                        <h2 className="section-title">Analysis Region</h2>
+                        <h2 className="section-title">{sectionTitle}</h2>
                         <ForecastToggle viewMode={viewMode} setViewMode={setViewMode} />
                     </div>
                     <div className="map-container">
                         <MapPanel center={mapCenter} zoom={13}>
-                            <FloodOverlay geojson={scanData.flood_geojson} viewMode={viewMode} />
-                            <InfrastructureMarkers infrastructure={scanData.infrastructure} />
+                            <FloodOverlay geojson={activeGeoJson} viewMode={viewMode} scanId={scanData.scan_id} />
+                            {viewMode !== 'before' && (
+                                <InfrastructureMarkers infrastructure={scanData.infrastructure} />
+                            )}
                         </MapPanel>
                     </div>
                 </motion.div>
@@ -77,12 +96,74 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
                     <motion.div variants={itemVariants}>
                         <BandwidthCounter data={scanData} />
                     </motion.div>
-                    <motion.div variants={itemVariants}>
-                        <RiskCard data={scanData} viewMode={viewMode} />
-                    </motion.div>
-                    <motion.div variants={itemVariants}>
-                        <StatsBar data={scanData} />
-                    </motion.div>
+
+                    {/* View-mode-dependent panels */}
+                    {viewMode === 'forecast' ? (
+                        <motion.div className="forecast-info glass-card" variants={itemVariants}>
+                            <h3 className="panel-title">
+                                <span className="section-icon">📈</span>
+                                72-Hour Forecast
+                            </h3>
+                            <div className="forecast-score-row">
+                                <span className="forecast-label">Flood Probability</span>
+                                <span className="forecast-value" style={{
+                                    color: scanData.forecast_score > 60 ? 'var(--color-danger)' :
+                                        scanData.forecast_score > 40 ? 'var(--color-warning)' : 'var(--color-success)'
+                                }}>
+                                    {scanData.forecast_score?.toFixed(0) || 0}%
+                                </span>
+                            </div>
+                            <p className="forecast-rec">{scanData.forecast_rec || 'No recommendation available.'}</p>
+                            <div className="forecast-rainfall">
+                                <span className="forecast-label">Projected Rainfall (6h intervals)</span>
+                                <div className="rainfall-bars">
+                                    {(scanData.rainfall_72h || []).map((val, i) => (
+                                        <div key={i} className="rainfall-bar-wrap">
+                                            <div
+                                                className="rainfall-bar"
+                                                style={{ height: `${Math.min(100, val)}%` }}
+                                                title={`${val} mm`}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
+                    ) : viewMode === 'before' ? (
+                        <motion.div className="before-info glass-card" variants={itemVariants}>
+                            <h3 className="panel-title">
+                                <span className="section-icon">📷</span>
+                                Baseline State
+                            </h3>
+                            <p className="before-desc">
+                                Pre-event satellite imagery showing the region before flood detection.
+                                No flood or change zones detected in baseline period.
+                            </p>
+                            <div className="before-stats">
+                                <div className="b-stat">
+                                    <span className="b-stat-label">Period</span>
+                                    <span className="b-stat-value">{scanData.t0_date || 'N/A'}</span>
+                                </div>
+                                <div className="b-stat">
+                                    <span className="b-stat-label">Sensor</span>
+                                    <span className="b-stat-value">Sentinel-2 Optical</span>
+                                </div>
+                                <div className="b-stat">
+                                    <span className="b-stat-label">NDWI Mean</span>
+                                    <span className="b-stat-value">Normal</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <>
+                            <motion.div variants={itemVariants}>
+                                <RiskCard data={scanData} viewMode={viewMode} />
+                            </motion.div>
+                            <motion.div variants={itemVariants}>
+                                <StatsBar data={scanData} />
+                            </motion.div>
+                        </>
+                    )}
 
                     {viewMode === 'drought' && (
                         <motion.div variants={itemVariants}>
@@ -104,3 +185,4 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
         </motion.div>
     );
 }
+

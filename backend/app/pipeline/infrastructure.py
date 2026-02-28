@@ -13,14 +13,14 @@ def fetch_infrastructure(bbox: dict) -> list[dict]:
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(_fetch_from_osm, bbox)
-            return future.result(timeout=15)
+            return future.result(timeout=30)
     except Exception as e:
         print(f"[INFRA] OSM fetch failed/timed out: {e}. Using simulated data.")
         return _simulate_infrastructure(bbox)
 
 
 def _fetch_from_osm(bbox: dict) -> list[dict]:
-    """Real OSMnx fetch — compatible with OSMnx 2.x."""
+    """Real OSMnx fetch — compatible with OSMnx 2.x. Fast path: no road graph."""
     import osmnx as ox
 
     # OSMnx 2.x uses bbox=(west, south, east, north) tuple
@@ -33,41 +33,56 @@ def _fetch_from_osm(bbox: dict) -> list[dict]:
         "water_treatment": {"man_made": "water_works"},
     }
 
+    MAX_PER_TYPE = 15  # limit to avoid huge datasets
+
     results = []
     for infra_type, tags in tags_map.items():
         try:
             gdf = ox.features_from_bbox(bbox=osm_bbox, tags=tags)
+            count = 0
             for _, row in gdf.iterrows():
+                if count >= MAX_PER_TYPE:
+                    break
                 centroid = row.geometry.centroid
+                lat, lon = centroid.y, centroid.x
+
+                # ONLY include items whose centroid is INSIDE the bbox
+                if not (bbox["south"] <= lat <= bbox["north"] and bbox["west"] <= lon <= bbox["east"]):
+                    continue
+
                 name = row.get("name", f"Unnamed {infra_type}")
                 results.append({
                     "type": infra_type,
                     "name": str(name) if name else f"Unnamed {infra_type}",
-                    "lat": centroid.y,
-                    "lon": centroid.x,
+                    "lat": lat,
+                    "lon": lon,
                     "risk_level": "UNKNOWN",
                 })
+                count += 1
+            print(f"[INFRA] {infra_type}: {count} features")
         except Exception as e:
             print(f"[INFRA] Failed to fetch {infra_type}: {e}")
             continue
 
-    # Also fetch major roads
+    # Estimate road length from highway features (FAST — no graph download)
     try:
-        G = ox.graph_from_bbox(bbox=osm_bbox, network_type="drive")
-        edges = ox.graph_to_gdfs(G, nodes=False)
-        total_road_km = edges["length"].sum() / 1000 if "length" in edges.columns else 0
+        road_tags = {"highway": ["primary", "secondary", "trunk", "motorway"]}
+        road_gdf = ox.features_from_bbox(bbox=osm_bbox, tags=road_tags)
+        # Estimate total road km from feature count * avg segment length
+        total_road_km = len(road_gdf) * 0.8  # rough estimate: 800m per segment
         results.append({
             "type": "road_network",
-            "name": f"Road network ({total_road_km:.1f} km)",
+            "name": f"Road network (~{total_road_km:.0f} km)",
             "lat": (bbox["north"] + bbox["south"]) / 2,
             "lon": (bbox["east"] + bbox["west"]) / 2,
             "risk_level": "UNKNOWN",
             "total_km": total_road_km,
         })
-        print(f"[INFRA] Found {len(results)} features, {total_road_km:.1f} km roads")
+        print(f"[INFRA] Roads: ~{total_road_km:.0f} km ({len(road_gdf)} segments)")
     except Exception as e:
         print(f"[INFRA] Road fetch failed: {e}")
 
+    print(f"[INFRA] Total: {len(results)} features from OSM")
     return results
 
 
@@ -100,9 +115,16 @@ def intersect_with_flood(infrastructure: list[dict], flood_mask: np.ndarray,
     lon_range = bbox["east"] - bbox["west"]
 
     for item in infrastructure:
+        lat, lon = item["lat"], item["lon"]
+
+        # Skip items outside the bbox — mark them LOW
+        if not (bbox["south"] <= lat <= bbox["north"] and bbox["west"] <= lon <= bbox["east"]):
+            item["risk_level"] = "LOW"
+            continue
+
         # Convert lat/lon to pixel coordinates
-        row = int((bbox["north"] - item["lat"]) / lat_range * h)
-        col = int((item["lon"] - bbox["west"]) / lon_range * w)
+        row = int((bbox["north"] - lat) / lat_range * h)
+        col = int((lon - bbox["west"]) / lon_range * w)
 
         row = max(0, min(row, h - 1))
         col = max(0, min(col, w - 1))
