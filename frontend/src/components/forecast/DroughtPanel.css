@@ -1,0 +1,79 @@
+/* ── Drought Panel — Silver-Black ── */
+.drought-panel {
+    padding: var(--space-4);
+    overflow: hidden;
+}
+
+.drought-tiers {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.drought-tier {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.tier-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 80px;
+}
+
+.tier-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-silver);
+}
+
+.tier-range {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--color-text-muted);
+}
+
+.tier-bar-track {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.tier-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+}
+
+.drought-stats {
+    display: flex;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.drought-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.d-stat-value {
+    font-family: var(--font-mono);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: #fff;
+}
+
+.d-stat-label {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}

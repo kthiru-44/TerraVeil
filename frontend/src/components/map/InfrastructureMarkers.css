@@ -1,0 +1,100 @@
+/* ── Infrastructure Markers ── */
+.infra-marker-wrapper {
+    background: none !important;
+    border: none !important;
+}
+
+.infra-marker {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--color-surface);
+    border: 2px solid var(--risk-color, var(--color-border));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    position: relative;
+    transition: transform 0.2s var(--ease-spring);
+}
+
+.infra-marker:hover {
+    transform: scale(1.2);
+}
+
+.infra-emoji {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.infra-marker.at-risk {
+    border-color: var(--risk-color);
+}
+
+.infra-pulse-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--risk-color);
+    animation: pulse-ring 1.5s ease-out infinite;
+}
+
+.infra-pulse-ring.delay {
+    animation-delay: 0.5s;
+}
+
+/* Popup styling */
+.infra-popup {
+    font-family: var(--font-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.infra-popup-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.infra-popup-icon {
+    font-size: 16px;
+}
+
+.infra-popup-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--color-text-dim);
+}
+
+.infra-risk-badge {
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.infra-risk-badge.risk-critical {
+    background: rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+}
+
+.infra-risk-badge.risk-high {
+    background: rgba(249, 115, 22, 0.2);
+    color: #f97316;
+}
+
+.infra-risk-badge.risk-medium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.infra-risk-badge.risk-low {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}

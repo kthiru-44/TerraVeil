@@ -1,0 +1,120 @@
+/* ── Node Card — Silver-Black ── */
+.node-card {
+    padding: var(--space-3);
+    transition: all var(--duration) var(--ease-out);
+}
+
+.node-card.active {
+    border-color: rgba(74, 222, 128, 0.15);
+}
+
+.node-card.active:hover {
+    box-shadow: 0 0 16px rgba(74, 222, 128, 0.06);
+}
+
+.node-card.failed {
+    opacity: 0.4;
+    border-color: rgba(248, 113, 113, 0.1);
+}
+
+.node-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
+}
+
+.node-card-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.node-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.dot-active {
+    background: var(--color-success);
+    box-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
+}
+
+.dot-failed {
+    background: var(--color-danger);
+}
+
+.node-card-id {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-silver);
+}
+
+.node-card-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.node-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.metric-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.metric-value {
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    font-weight: 700;
+    color: #fff;
+}
+
+.metric-bar {
+    height: 2px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 1px;
+    overflow: hidden;
+}
+
+.metric-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fff, #808080);
+    border-radius: 1px;
+    transition: width 1s var(--ease-out);
+}
+
+.metric-bar-fill.compute {
+    background: linear-gradient(90deg, var(--color-success), var(--color-warning));
+}
+
+.node-metric-row {
+    display: flex;
+    gap: var(--space-3);
+    margin-top: var(--space-1);
+    padding-top: var(--space-2);
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.node-metric-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.metric-value-sm {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-dim);
+}

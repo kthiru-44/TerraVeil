@@ -1,0 +1,51 @@
+/* ── Forecast Toggle — Silver-Black ── */
+.forecast-toggle {
+    display: flex;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius);
+    padding: 3px;
+}
+
+.ft-tab {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: calc(var(--radius) - 2px);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-dim);
+    transition: all var(--duration) var(--ease-out);
+    white-space: nowrap;
+}
+
+.ft-tab:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.ft-tab.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ft-icon {
+    font-size: 12px;
+}
+
+.ft-label {
+    letter-spacing: 0.02em;
+}
+
+@media (max-width: 768px) {
+    .ft-label {
+        display: none;
+    }
+
+    .ft-tab {
+        padding: 6px 10px;
+    }
+}

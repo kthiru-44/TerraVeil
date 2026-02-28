@@ -1,0 +1,166 @@
+import { useState, useCallback } from 'react';
+import LoginPage from './components/auth/LoginPage.jsx';
+import OrbitalIntro from './components/animation/OrbitalIntro.jsx';
+import Dashboard from './components/dashboard/Dashboard.jsx';
+import './App.css';
+
+/* ── Region Presets ── */
+export const REGION_PRESETS = {
+    kolhapur: {
+        label: 'Kolhapur, Maharashtra',
+        bbox: [74.0, 16.5, 74.4, 16.9],
+        center: [16.7, 74.2],
+        date_start: '2021-07-15',
+        date_end: '2021-07-25',
+    },
+    chennai: {
+        label: 'Chennai, Tamil Nadu',
+        bbox: [80.0, 12.8, 80.4, 13.2],
+        center: [13.0, 80.2],
+        date_start: '2021-11-01',
+        date_end: '2021-11-10',
+    },
+    pakistan: {
+        label: 'Sindh, Pakistan',
+        bbox: [67.5, 25.0, 68.5, 26.5],
+        center: [25.75, 68.0],
+        date_start: '2022-08-20',
+        date_end: '2022-09-01',
+    },
+    custom: {
+        label: 'Custom Location',
+        bbox: [0, 0, 0, 0],
+        center: [20.5, 78.9],
+        date_start: '',
+        date_end: '',
+    },
+};
+
+/* ── Demo Data ── */
+export const DEMO_SCAN = {
+    scan_id: 'demo-scan-001',
+    region: 'kolhapur',
+    status: 'completed',
+    risk_level: 'CRITICAL',
+    risk_score: 82,
+    confidence: 0.91,
+    confidence_low: 0.87,
+    confidence_high: 0.95,
+    flood_area_km2: 142.7,
+    drought_area_km2: 0,
+    pop_affected: 234000,
+    hospitals_at_risk: 3,
+    schools_at_risk: 12,
+    roads_km_affected: 47.3,
+    bridges_at_risk: 5,
+    ndwi_mean: 0.42,
+    bandwidth_raw_mb: 2300,
+    bandwidth_packet_kb: 6.2,
+    bandwidth_ratio: 380645,
+    forecast_score: 68,
+    forecast_rec: 'High probability of continued flooding over next 72h. Evacuate low-lying areas immediately.',
+    rainfall_72h: [45, 62, 38, 55, 70, 48, 58, 42, 65, 50, 72, 40],
+    nodes: [
+        { node_id: 'COSMEON-LEO-07', status: 'active', confidence: 0.93, compute_ms: 620, bandwidth_ratio: 380000, flood_area_km2: 145.2 },
+        { node_id: 'COSMEON-LEO-11', status: 'active', confidence: 0.89, compute_ms: 710, bandwidth_ratio: 375000, flood_area_km2: 138.9 },
+        { node_id: 'COSMEON-LEO-14', status: 'active', confidence: 0.91, compute_ms: 580, bandwidth_ratio: 385000, flood_area_km2: 144.1 },
+    ],
+    infrastructure: [
+        { type: 'hospital', name: 'Civil Hospital Kolhapur', coords: [16.705, 74.224], risk_level: 'HIGH' },
+        { type: 'hospital', name: 'Shahu Hospital', coords: [16.695, 74.240], risk_level: 'CRITICAL' },
+        { type: 'hospital', name: 'Govt. Medical College', coords: [16.715, 74.210], risk_level: 'MEDIUM' },
+        { type: 'school', name: 'DY Patil School', coords: [16.680, 74.250], risk_level: 'HIGH' },
+        { type: 'school', name: 'Shivaji University', coords: [16.680, 74.238], risk_level: 'HIGH' },
+        { type: 'bridge', name: 'Panchganga Bridge', coords: [16.700, 74.230], risk_level: 'CRITICAL' },
+        { type: 'bridge', name: 'Rajaram Bridge', coords: [16.690, 74.218], risk_level: 'HIGH' },
+        { type: 'water', name: 'Kalamba Water Works', coords: [16.670, 74.245], risk_level: 'HIGH' },
+    ],
+    logs: [
+        { step: 1, step_name: 'SATELLITE_INGESTION', status: 'completed', icon: '🛰', duration_ms: 3200, output: 'Sentinel-2 L2A composite fetched; cloud cover 12%' },
+        { step: 2, step_name: 'NDWI_COMPUTATION', status: 'completed', icon: '🌊', duration_ms: 890, output: 'NDWI mean: 0.42; flood mask generated; area: 142.7 km²' },
+        { step: 3, step_name: 'SAR_ANALYSIS', status: 'completed', icon: '📡', duration_ms: 1450, output: 'Sentinel-1 VV/VH processed; Otsu threshold: -14.2 dB' },
+        { step: 4, step_name: 'CHANGE_DETECTION', status: 'completed', icon: '🔄', duration_ms: 670, output: 'Delta NDWI computed; 89 km² new inundation detected' },
+        { step: 5, step_name: 'OEC_INFERENCE', status: 'completed', icon: '🤖', duration_ms: 1820, output: '3/3 orbital nodes processed; avg compute: 637ms' },
+        { step: 6, step_name: 'CONSENSUS', status: 'completed', icon: '🔗', duration_ms: 120, output: 'Bayesian consensus: confidence 0.91 [0.87-0.95]' },
+        { step: 7, step_name: 'INFRASTRUCTURE_OVERLAY', status: 'completed', icon: '🏗', duration_ms: 540, output: '8 facilities identified; 5 at HIGH+ risk' },
+        { step: 8, step_name: 'RISK_CLASSIFICATION', status: 'completed', icon: '⚡', duration_ms: 80, output: 'Risk: CRITICAL (score: 82/100)' },
+        { step: 9, step_name: 'FORECAST_72H', status: 'completed', icon: '📈', duration_ms: 950, output: 'Forecast score: 68/100; continued flooding likely' },
+        { step: 10, step_name: 'REPORT_GENERATION', status: 'completed', icon: '📋', duration_ms: 210, output: 'Report generated; scan completed successfully' },
+    ],
+    flood_geojson: {
+        type: 'FeatureCollection',
+        features: [
+            {
+                type: 'Feature',
+                properties: { intensity: 0.9, type: 'flood' },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[[74.15, 16.65], [74.30, 16.65], [74.30, 16.75], [74.15, 16.75], [74.15, 16.65]]],
+                },
+            },
+            {
+                type: 'Feature',
+                properties: { intensity: 0.6, type: 'flood' },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[[74.10, 16.70], [74.25, 16.70], [74.25, 16.80], [74.10, 16.80], [74.10, 16.70]]],
+                },
+            },
+            {
+                type: 'Feature',
+                properties: { intensity: 0.3, type: 'flood' },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[[74.20, 16.60], [74.35, 16.60], [74.35, 16.72], [74.20, 16.72], [74.20, 16.60]]],
+                },
+            },
+        ],
+    },
+};
+
+export default function App() {
+    const [user, setUser] = useState(null);
+    const [showIntro, setShowIntro] = useState(false);
+    const [showDashboard, setShowDashboard] = useState(false);
+    const [scanData, setScanData] = useState(DEMO_SCAN);
+    const [selectedRegion, setSelectedRegion] = useState('kolhapur');
+
+    const handleLogin = useCallback((userData) => {
+        setUser(userData);
+        setShowIntro(true);
+    }, []);
+
+    const handleIntroComplete = useCallback(() => {
+        setShowIntro(false);
+        setShowDashboard(true);
+    }, []);
+
+    const handleLogout = useCallback(() => {
+        setUser(null);
+        setShowIntro(false);
+        setShowDashboard(false);
+    }, []);
+
+    return (
+        <div className="app">
+            {/* Login */}
+            {!user && <LoginPage onLogin={handleLogin} />}
+
+            {/* Orbital Intro */}
+            {user && showIntro && <OrbitalIntro onComplete={handleIntroComplete} />}
+
+            {/* Dashboard */}
+            {user && showDashboard && (
+                <Dashboard
+                    user={user}
+                    scanData={scanData}
+                    setScanData={setScanData}
+                    selectedRegion={selectedRegion}
+                    setSelectedRegion={setSelectedRegion}
+                    regionPresets={REGION_PRESETS}
+                    onLogout={handleLogout}
+                />
+            )}
+        </div>
+    );
+}
