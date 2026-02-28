@@ -200,21 +200,6 @@ cp .env.example .env
 
 <br />
 
-## 🧪 Testing
-
-The backend ships with **69 automated test cases** covering API endpoints, pipeline modules, and validation logic.
-
-```bash
-cd backend
-python -m pytest tests/ -v --tb=short
-```
-
-| Suite | Tests | Covers |
-|-------|:-----:|--------|
-| `test_api.py` | 35 | All REST endpoints, error handling, validation |
-| `test_pipeline.py` | 34 | NDWI, SAR, NDDI, change detection, risk scoring, forecast |
-
-<br />
 
 ## 📂 Project Structure
 
@@ -258,18 +243,6 @@ TerraVeil/
 
 <br />
 
-## 🌍 Supported Regions
-
-TerraVeil comes pre-configured with three high-risk regions, plus support for any custom location:
-
-| Region | Coordinates | Risk Profile |
-|--------|:-----------:|-------------|
-| 🇮🇳 **Kolhapur, Maharashtra** | 16.7°N, 74.2°E | Monsoon flooding, Panchganga River basin |
-| 🇮🇳 **Chennai, Tamil Nadu** | 13.1°N, 80.3°E | Cyclonic flooding, coastal surge |
-| 🇵🇰 **Sindh, Pakistan** | 25.4°N, 68.4°E | Indus River flooding, monsoon extremes |
-| 📍 **Custom Location** | _User-defined_ | Any global coordinate with lat/lon input |
-
-<br />
 
 ## 🔑 Key Technologies
 
