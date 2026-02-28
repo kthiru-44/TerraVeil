@@ -16,15 +16,28 @@ def _init_gee():
         return True
     try:
         import ee
+        import os
+        # Try Service Account first
         if GEE_SERVICE_ACCOUNT and GEE_KEY_FILE and Path(GEE_KEY_FILE).exists():
+            print(f"[GEE] Initializing with Service Account: {GEE_SERVICE_ACCOUNT}")
             credentials = ee.ServiceAccountCredentials(GEE_SERVICE_ACCOUNT, GEE_KEY_FILE)
             ee.Initialize(credentials)
         else:
-            ee.Initialize()
+            # Fallback to Application Default Credentials (ADC from 'gcloud auth application-default login')
+            adc_path = os.path.expanduser("~/.config/gcloud/application_default_credentials.json")
+            if os.path.exists(adc_path):
+                print(f"[GEE] Initializing with Application Default Credentials from {adc_path}...")
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = adc_path
+                ee.Initialize()
+            else:
+                print("[GEE] No ADC found. Initializing with default scope...")
+                ee.Initialize()
+        
         _ee_initialized = True
+        print("[GEE] Initialization successful.")
         return True
     except Exception as e:
-        print(f"[GEE] Init failed: {e}. Will use cached data.")
+        print(f"[GEE] Init failed: {e}. Falling back to simulated pipeline.")
         return False
 
 
@@ -78,11 +91,15 @@ def _fetch_s2_from_gee(bbox: dict, t0: str, t1: str) -> dict:
         .clip(aoi)
     )
 
-    # Event: closest to t1
+    # Event: closest to t1 (±3 day window for satellite revisit reliability)
+    from datetime import datetime, timedelta
+    t1_dt = datetime.fromisoformat(t1)
+    t1_start = (t1_dt - timedelta(days=3)).strftime("%Y-%m-%d")
+    t1_end = (t1_dt + timedelta(days=3)).strftime("%Y-%m-%d")
     event = (
         ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
         .filterBounds(aoi)
-        .filterDate(t1, t1)
+        .filterDate(t1_start, t1_end)
         .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 20))
         .median()
         .clip(aoi)
