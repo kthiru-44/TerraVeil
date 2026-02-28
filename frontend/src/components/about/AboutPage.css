@@ -1,0 +1,563 @@
+/* ═══════════════════════════════════════════
+   About Page — COSMEON Glassmorphic Silver-Black
+   ═══════════════════════════════════════════ */
+
+.about-page {
+    min-height: 100vh;
+    background: #000;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ── Background FX ── */
+.about-bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.about-bg-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+    animation: orb-glow 8s ease-in-out infinite;
+}
+
+.about-orb-1 {
+    width: 600px;
+    height: 600px;
+    background: white;
+    top: -200px;
+    right: -150px;
+}
+
+.about-orb-2 {
+    width: 500px;
+    height: 500px;
+    background: #c0c0c0;
+    bottom: 200px;
+    left: -200px;
+    animation-delay: -3s;
+}
+
+.about-orb-3 {
+    width: 400px;
+    height: 400px;
+    background: rgba(192, 192, 192, 0.5);
+    top: 50%;
+    right: -100px;
+    animation-delay: -6s;
+}
+
+/* ── Nav ── */
+.about-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-8);
+    height: 56px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.about-back {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-dim);
+    transition: all var(--duration) var(--ease-out);
+    letter-spacing: 0.02em;
+    min-width: 160px;
+}
+
+.about-back:hover {
+    color: #fff;
+}
+
+.about-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.about-nav-svg {
+    width: 24px;
+    height: 24px;
+    animation: rotate-slow 20s linear infinite;
+}
+
+.about-nav-title {
+    font-size: var(--text-base);
+    font-weight: 800;
+    letter-spacing: 0.25em;
+    color: #fff;
+}
+
+/* ── Content ── */
+.about-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+}
+
+/* ── Hero ── */
+.about-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--space-10) 0;
+    gap: var(--space-4);
+}
+
+.hero-logo {
+    margin-bottom: var(--space-2);
+}
+
+.hero-logo-svg {
+    width: 80px;
+    height: 80px;
+    animation: rotate-slow 25s linear infinite;
+}
+
+.hero-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: 0.4em;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+}
+
+.hero-subtitle {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    color: var(--color-text-dim);
+    margin: 0;
+}
+
+.hero-desc {
+    font-size: var(--text-lg);
+    color: var(--color-text-dim);
+    max-width: 600px;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.hero-badges {
+    display: flex;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+}
+
+.hero-badge {
+    padding: var(--space-1) var(--space-4);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--color-silver);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* ── Sections ── */
+.about-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.03em;
+    margin: 0;
+}
+
+.sh-icon {
+    font-size: 20px;
+}
+
+.section-glass {
+    padding: var(--space-6);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-lg);
+    border-left: 3px solid rgba(192, 192, 192, 0.2);
+}
+
+.mission-text {
+    font-size: var(--text-base);
+    color: var(--color-text-dim);
+    line-height: 1.8;
+    margin: 0;
+}
+
+.mission-text strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* ── Pipeline ── */
+.pipeline-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.pipeline-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) !important;
+}
+
+.pipe-step {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.08);
+    min-width: 40px;
+}
+
+.pipe-title {
+    display: block;
+    font-size: var(--text-base);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.pipe-desc {
+    display: block;
+    font-size: var(--text-sm);
+    color: var(--color-text-dim);
+    line-height: 1.4;
+}
+
+/* ── Tech Grid ── */
+.tech-grid-page {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-3);
+}
+
+.tech-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-3) !important;
+    transition: all var(--duration) var(--ease-out);
+}
+
+.tech-tile:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+}
+
+.tech-tile-icon {
+    font-size: 28px;
+}
+
+.tech-tile-label {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: #fff;
+}
+
+.tech-tile-desc {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
+/* ── Metrics ── */
+.metrics-grid-page {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+}
+
+.metric-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-2);
+    padding: var(--space-5) !important;
+}
+
+.metric-tile-value {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    color: #fff;
+}
+
+.metric-tile-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--color-silver);
+}
+
+.metric-tile-detail {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+/* ── Benefits ── */
+.benefits-grid-page {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.benefit-tile {
+    padding: var(--space-5) !important;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    transition: all var(--duration) var(--ease-out);
+}
+
+.benefit-tile:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.benefit-tile-icon {
+    font-size: 28px;
+}
+
+.benefit-tile-title {
+    font-size: var(--text-base);
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.benefit-tile-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-dim);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── Access ── */
+.access-grid-page {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+}
+
+.access-tile {
+    padding: var(--space-4) !important;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.access-tile-tier {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.access-tile-users {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: #fff;
+}
+
+.access-tile-desc {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
+/* ── Cost ── */
+.cost-section {
+    display: flex;
+    align-items: stretch;
+    padding: var(--space-8) !important;
+    gap: 0;
+}
+
+.cost-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    text-align: center;
+}
+
+.cost-side-tag {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    color: var(--color-text-dim);
+}
+
+.cost-tag-free {
+    color: #4ade80;
+}
+
+.cost-side-price {
+    font-family: var(--font-mono);
+    font-size: var(--text-3xl);
+    font-weight: 800;
+    color: #f87171;
+}
+
+.cost-side-price small {
+    font-size: var(--text-base);
+    color: var(--color-text-muted);
+}
+
+.cost-price-free {
+    color: #4ade80 !important;
+    text-shadow: 0 0 30px rgba(74, 222, 128, 0.15);
+}
+
+.cost-side-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.cost-side-list li {
+    font-size: var(--text-sm);
+    color: var(--color-text-dim);
+    position: relative;
+    padding-left: var(--space-4);
+}
+
+.cost-side-list li::before {
+    content: '·';
+    position: absolute;
+    left: 8px;
+    color: var(--color-text-muted);
+}
+
+.cost-divider {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-6);
+}
+
+.cost-vs-badge {
+    font-size: var(--text-sm);
+    font-weight: 800;
+    color: var(--color-text-muted);
+    letter-spacing: 0.1em;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-full);
+}
+
+/* ── Footer ── */
+.about-footer-section {
+    padding: var(--space-8) 0 var(--space-4);
+}
+
+.footer-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+    margin-bottom: var(--space-6);
+}
+
+.footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+}
+
+.footer-brand {
+    font-size: var(--text-sm);
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: var(--color-silver);
+}
+
+.footer-detail {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+}
+
+.footer-sep {
+    color: var(--color-text-muted);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .tech-grid-page {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .about-nav {
+        padding: 0 var(--space-4);
+    }
+
+    .about-content {
+        padding: var(--space-6) var(--space-4);
+        gap: var(--space-8);
+    }
+
+    .hero-title {
+        letter-spacing: 0.2em;
+    }
+
+    .tech-grid-page,
+    .metrics-grid-page,
+    .benefits-grid-page,
+    .access-grid-page {
+        grid-template-columns: 1fr;
+    }
+
+    .cost-section {
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .cost-divider {
+        padding: 0;
+    }
+}

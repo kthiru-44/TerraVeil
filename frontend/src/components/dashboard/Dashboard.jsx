@@ -28,28 +28,70 @@ const itemVariants = {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
 };
 
-export default function Dashboard({ user, scanData, setScanData, selectedRegion, setSelectedRegion, regionPresets, onLogout }) {
+/* ── Date helpers ── */
+const MONTHS = [
+    { value: '01', label: 'January' },
+    { value: '02', label: 'February' },
+    { value: '03', label: 'March' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'May' },
+    { value: '06', label: 'June' },
+    { value: '07', label: 'July' },
+    { value: '08', label: 'August' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+];
+
+const YEARS = ['2024', '2023', '2022', '2021', '2020', '2019'];
+
+const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+
+function parseDate(dateStr) {
+    if (!dateStr) return { year: '', month: '', day: '' };
+    const parts = dateStr.split('-');
+    return { year: parts[0] || '', month: parts[1] || '', day: parts[2] || '' };
+}
+
+function buildDate(year, month, day) {
+    if (!year || !month || !day) return '';
+    return `${year}-${month}-${day}`;
+}
+
+export default function Dashboard({ user, scanData, setScanData, selectedRegion, setSelectedRegion, regionPresets }) {
     const [viewMode, setViewMode] = useState('now');
     const [isScanning, setIsScanning] = useState(false);
     const [customLocation, setCustomLocation] = useState('');
     const [customLat, setCustomLat] = useState('');
     const [customLon, setCustomLon] = useState('');
-    const [dateStart, setDateStart] = useState('');
-    const [dateEnd, setDateEnd] = useState('');
-    const [showProfile, setShowProfile] = useState(false);
+    const [showResults, setShowResults] = useState(true);
 
     const region = regionPresets[selectedRegion];
+
+    // Date state split into dropdowns
+    const defaultStart = parseDate(region.date_start);
+    const defaultEnd = parseDate(region.date_end);
+    const [startYear, setStartYear] = useState(defaultStart.year || '2021');
+    const [startMonth, setStartMonth] = useState(defaultStart.month || '07');
+    const [startDay, setStartDay] = useState(defaultStart.day || '15');
+    const [endYear, setEndYear] = useState(defaultEnd.year || '2021');
+    const [endMonth, setEndMonth] = useState(defaultEnd.month || '07');
+    const [endDay, setEndDay] = useState(defaultEnd.day || '25');
 
     const handleRegionChange = (key) => {
         setSelectedRegion(key);
         if (key !== 'custom') {
-            setDateStart(regionPresets[key].date_start);
-            setDateEnd(regionPresets[key].date_end);
+            const s = parseDate(regionPresets[key].date_start);
+            const e = parseDate(regionPresets[key].date_end);
+            setStartYear(s.year); setStartMonth(s.month); setStartDay(s.day);
+            setEndYear(e.year); setEndMonth(e.month); setEndDay(e.day);
         }
     };
 
     const handleScan = async () => {
         setIsScanning(true);
+        setShowResults(false);
         try {
             const isCustom = selectedRegion === 'custom';
             const lat = isCustom ? parseFloat(customLat) : region.center[0];
@@ -57,15 +99,18 @@ export default function Dashboard({ user, scanData, setScanData, selectedRegion,
             const payload = {
                 region: isCustom ? customLocation : selectedRegion,
                 bbox: isCustom ? [lon - 0.2, lat - 0.2, lon + 0.2, lat + 0.2] : region.bbox,
-                date_start: dateStart || region.date_start,
-                date_end: dateEnd || region.date_end,
+                date_start: buildDate(startYear, startMonth, startDay) || region.date_start,
+                date_end: buildDate(endYear, endMonth, endDay) || region.date_end,
                 source: 'sentinel2',
             };
             await submitScan(payload);
         } catch (e) {
             // Demo mode
         }
-        setTimeout(() => setIsScanning(false), 2000);
+        setTimeout(() => {
+            setIsScanning(false);
+            setShowResults(true);
+        }, 3000);
     };
 
     const mapCenter = selectedRegion === 'custom' && customLat && customLon
@@ -74,49 +119,6 @@ export default function Dashboard({ user, scanData, setScanData, selectedRegion,
 
     return (
         <motion.div className="dashboard" variants={containerVariants} initial="hidden" animate="visible">
-
-            {/* ── Navbar ── */}
-            <motion.nav className="nav" variants={itemVariants}>
-                <div className="nav-left">
-                    <div className="nav-logo-mark">
-                        <svg viewBox="0 0 24 24" className="nav-logo-svg">
-                            <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(192,192,192,0.2)" strokeWidth="0.5" />
-                            <circle cx="12" cy="12" r="2" fill="#fff" />
-                            <circle cx="12" cy="2" r="1.2" fill="#c0c0c0" />
-                        </svg>
-                    </div>
-                    <span className="nav-title">TERRAVEIL</span>
-                    <span className="nav-divider" />
-                    <span className="nav-subtitle">Orbital Edge Intelligence</span>
-                </div>
-                <div className="nav-center">
-                    <BandwidthCounter data={scanData} />
-                </div>
-                <div className="nav-right">
-                    <div className="nav-status">
-                        <span className="status-dot" />
-                        <span className="status-text">ONLINE</span>
-                    </div>
-                    <div className="nav-user" onClick={() => setShowProfile(!showProfile)}>
-                        <span className="user-avatar">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
-                        {showProfile && (
-                            <div className="profile-dropdown glass-card-solid">
-                                <div className="profile-header">
-                                    <span className="profile-avatar-lg">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
-                                    <div className="profile-info">
-                                        <span className="profile-name">{user?.name || 'Operator'}</span>
-                                        <span className="profile-email">{user?.email || 'user@cosmeon.in'}</span>
-                                    </div>
-                                </div>
-                                <div className="profile-divider" />
-                                <button className="profile-logout" onClick={(e) => { e.stopPropagation(); onLogout?.(); }}>
-                                    <span>⏻</span> LOG OUT
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </motion.nav>
 
             {/* ── Body ── */}
             <div className="dashboard-body">
@@ -177,48 +179,45 @@ export default function Dashboard({ user, scanData, setScanData, selectedRegion,
                                     <div className="form-row">
                                         <div className="form-group">
                                             <label className="form-label">LATITUDE</label>
-                                            <input
-                                                type="number"
-                                                className="form-input"
-                                                placeholder="19.0760"
-                                                step="0.0001"
-                                                value={customLat}
-                                                onChange={(e) => setCustomLat(e.target.value)}
-                                            />
+                                            <input type="number" className="form-input" placeholder="19.0760" step="0.0001" value={customLat} onChange={(e) => setCustomLat(e.target.value)} />
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">LONGITUDE</label>
-                                            <input
-                                                type="number"
-                                                className="form-input"
-                                                placeholder="72.8777"
-                                                step="0.0001"
-                                                value={customLon}
-                                                onChange={(e) => setCustomLon(e.target.value)}
-                                            />
+                                            <input type="number" className="form-input" placeholder="72.8777" step="0.0001" value={customLon} onChange={(e) => setCustomLon(e.target.value)} />
                                         </div>
                                     </div>
                                 </motion.div>
                             )}
 
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">START DATE</label>
-                                    <input
-                                        type="date"
-                                        className="form-input"
-                                        value={dateStart || region.date_start}
-                                        onChange={(e) => setDateStart(e.target.value)}
-                                    />
+                            {/* Start Date Dropdowns */}
+                            <div className="form-group">
+                                <label className="form-label">START DATE</label>
+                                <div className="date-dropdowns">
+                                    <select className="form-select date-select" value={startDay} onChange={(e) => setStartDay(e.target.value)}>
+                                        {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+                                    </select>
+                                    <select className="form-select date-select date-month" value={startMonth} onChange={(e) => setStartMonth(e.target.value)}>
+                                        {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                                    </select>
+                                    <select className="form-select date-select" value={startYear} onChange={(e) => setStartYear(e.target.value)}>
+                                        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                                    </select>
                                 </div>
-                                <div className="form-group">
-                                    <label className="form-label">END DATE</label>
-                                    <input
-                                        type="date"
-                                        className="form-input"
-                                        value={dateEnd || region.date_end}
-                                        onChange={(e) => setDateEnd(e.target.value)}
-                                    />
+                            </div>
+
+                            {/* End Date Dropdowns */}
+                            <div className="form-group">
+                                <label className="form-label">END DATE</label>
+                                <div className="date-dropdowns">
+                                    <select className="form-select date-select" value={endDay} onChange={(e) => setEndDay(e.target.value)}>
+                                        {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+                                    </select>
+                                    <select className="form-select date-select date-month" value={endMonth} onChange={(e) => setEndMonth(e.target.value)}>
+                                        {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                                    </select>
+                                    <select className="form-select date-select" value={endYear} onChange={(e) => setEndYear(e.target.value)}>
+                                        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                                    </select>
                                 </div>
                             </div>
 
@@ -230,41 +229,45 @@ export default function Dashboard({ user, scanData, setScanData, selectedRegion,
                                 {isScanning ? (
                                     <span className="scan-loading">
                                         <span className="scan-spinner" />
-                                        ANALYZING
+                                        ANALYZING SATELLITE DATA
                                     </span>
                                 ) : (
-                                    'LAUNCH SCAN'
+                                    '🛰 LAUNCH SCAN'
                                 )}
                             </button>
                         </div>
                     </motion.div>
 
-                    {/* Risk + Stats */}
-                    <motion.div variants={itemVariants}>
-                        <RiskCard data={scanData} viewMode={viewMode} />
-                    </motion.div>
-                    <motion.div variants={itemVariants}>
-                        <StatsBar data={scanData} />
-                    </motion.div>
+                    {/* Results — shown after scan */}
+                    {showResults && (
+                        <>
+                            <motion.div variants={itemVariants}>
+                                <BandwidthCounter data={scanData} />
+                            </motion.div>
+                            <motion.div variants={itemVariants}>
+                                <RiskCard data={scanData} viewMode={viewMode} />
+                            </motion.div>
+                            <motion.div variants={itemVariants}>
+                                <StatsBar data={scanData} />
+                            </motion.div>
 
-                    {viewMode === 'drought' && (
-                        <motion.div variants={itemVariants}>
-                            <DroughtPanel data={scanData} />
-                        </motion.div>
+                            {viewMode === 'drought' && (
+                                <motion.div variants={itemVariants}>
+                                    <DroughtPanel data={scanData} />
+                                </motion.div>
+                            )}
+
+                            <motion.div variants={itemVariants}>
+                                <ConsensusResult data={scanData} />
+                            </motion.div>
+                            <motion.div variants={itemVariants}>
+                                <NodeTelemetry nodes={scanData.nodes} />
+                            </motion.div>
+                            <motion.div variants={itemVariants}>
+                                <LogPanel logs={scanData.logs} status={scanData.status} />
+                            </motion.div>
+                        </>
                     )}
-
-                    {/* Nodes */}
-                    <motion.div variants={itemVariants}>
-                        <ConsensusResult data={scanData} />
-                    </motion.div>
-                    <motion.div variants={itemVariants}>
-                        <NodeTelemetry nodes={scanData.nodes} />
-                    </motion.div>
-
-                    {/* Logs */}
-                    <motion.div variants={itemVariants}>
-                        <LogPanel logs={scanData.logs} status={scanData.status} />
-                    </motion.div>
                 </div>
             </div>
         </motion.div>

@@ -1,4 +1,246 @@
+/* ═══════════════════════════════════════════
+   App Shell — COSMEON Premium Silver-Black
+   ═══════════════════════════════════════════ */
+
 .app {
     min-height: 100vh;
-    background: var(--color-bg);
+    background: #000;
+}
+
+/* ── Global Nav ── */
+.app-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-6);
+    height: 56px;
+    background: rgba(0, 0, 0, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.app-nav-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.app-nav-logo {
+    width: 28px;
+    height: 28px;
+}
+
+.app-nav-svg {
+    width: 100%;
+    height: 100%;
+    animation: rotate-slow 20s linear infinite;
+}
+
+.app-nav-brand {
+    font-size: var(--text-lg);
+    font-weight: 800;
+    letter-spacing: 0.25em;
+    color: #fff;
+}
+
+.app-nav-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 var(--space-2);
+}
+
+/* ── Tabs ── */
+.app-nav-tabs {
+    display: flex;
+    gap: 2px;
+}
+
+.app-tab {
+    padding: 6px var(--space-5);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--color-text-dim);
+    border-radius: var(--radius-sm);
+    transition: all var(--duration) var(--ease-out);
+    position: relative;
+}
+
+.app-tab:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.app-tab.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.app-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 25%;
+    right: 25%;
+    height: 2px;
+    background: #fff;
+    border-radius: 1px;
+}
+
+/* ── Nav Right ── */
+.app-nav-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.app-nav-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.status-dot-app {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-success);
+    box-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
+}
+
+.status-text-app {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-success);
+    letter-spacing: 0.12em;
+}
+
+/* ── User Profile ── */
+.app-nav-user {
+    position: relative;
+    cursor: pointer;
+}
+
+.app-user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--color-silver);
+    transition: all var(--duration) var(--ease-out);
+}
+
+.app-user-avatar:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.app-profile-dropdown {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    width: 240px;
+    padding: var(--space-4);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition: all 0.2s var(--ease-out);
+}
+
+.app-profile-dropdown.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.apd-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.apd-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-base);
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.apd-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apd-name {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: #fff;
+}
+
+.apd-email {
+    font-size: var(--text-xs);
+    color: var(--color-text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apd-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: var(--space-3) 0;
+}
+
+.apd-logout {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-danger);
+    transition: all var(--duration) var(--ease-out);
+    letter-spacing: 0.05em;
+}
+
+.apd-logout:hover {
+    background: var(--color-danger-dim);
+}
+
+@media (max-width: 768px) {
+    .app-nav {
+        padding: 0 var(--space-3);
+    }
+
+    .app-nav-brand {
+        display: none;
+    }
+
+    .app-nav-divider {
+        display: none;
+    }
 }
