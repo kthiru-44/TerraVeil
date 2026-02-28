@@ -1,0 +1,510 @@
+/* ═══════════════════════════════════════════
+   TerraVeil — Global Styles (COSMEON Premium)
+   ═══════════════════════════════════════════ */
+@import './variables.css';
+
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+body {
+    font-family: var(--font-primary);
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+a {
+    color: var(--color-silver);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--color-text);
+}
+
+img,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+button {
+    font-family: var(--font-primary);
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: inherit;
+}
+
+input,
+select,
+textarea {
+    font-family: var(--font-primary);
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-base);
+    outline: none;
+    transition: border-color var(--duration) var(--ease-out);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--color-silver);
+    box-shadow: 0 0 0 2px rgba(192, 192, 192, 0.08);
+}
+
+/* ── Scrollbar — Minimal ── */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border-2);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-silver-dim);
+}
+
+/* ── Glass Cards — Frosted Black ── */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transition: border-color var(--duration) var(--ease-out);
+}
+
+.glass-card:hover {
+    border-color: var(--glass-border-hover);
+}
+
+.glass-card-solid {
+    background: var(--glass-bg-2);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+/* ── Premium Text Effects ── */
+.accent-text {
+    background: linear-gradient(135deg, #ffffff, #c0c0c0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.silver-text {
+    color: var(--color-silver);
+}
+
+.metallic-text {
+    background: linear-gradient(180deg, #e0e0e0 0%, #808080 50%, #c0c0c0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ── Badges ── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge-success {
+    background: var(--color-success-dim);
+    color: var(--color-success);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+.badge-warning {
+    background: var(--color-warning-dim);
+    color: var(--color-warning);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.badge-danger {
+    background: var(--color-danger-dim);
+    color: var(--color-danger);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+.badge-critical {
+    background: var(--color-critical-dim);
+    color: var(--color-critical);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    animation: pulse-danger 2.5s ease-in-out infinite;
+}
+
+.badge-info {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-silver);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ── Buttons — Premium Silver ── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius);
+    font-size: var(--text-base);
+    font-weight: 600;
+    transition: all var(--duration) var(--ease-out);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: #ffffff;
+    color: #000000;
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.08);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 30px rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--color-border-2);
+    color: var(--color-silver);
+}
+
+.btn-secondary:hover {
+    border-color: var(--color-silver);
+    color: var(--color-text);
+    box-shadow: var(--shadow-silver);
+}
+
+.btn-ghost {
+    color: var(--color-text-dim);
+}
+
+.btn-ghost:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Keyframe Animations ── */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fade-in-down {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slide-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.03);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
+    }
+}
+
+@keyframes pulse-danger {
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px var(--color-critical-dim);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+@keyframes glow-border {
+
+    0%,
+    100% {
+        border-color: var(--color-border);
+    }
+
+    50% {
+        border-color: var(--color-silver);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes scan-line {
+    0% {
+        top: -2px;
+    }
+
+    100% {
+        top: 100%;
+    }
+}
+
+@keyframes orbit {
+    from {
+        transform: rotate(0deg) translateX(120px) rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg) translateX(120px) rotate(-360deg);
+    }
+}
+
+@keyframes beam-sweep {
+    0% {
+        transform: scaleY(0);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: scaleY(1);
+        opacity: 0.6;
+    }
+}
+
+@keyframes count-up {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes rotate-slow {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes metallic-shimmer {
+    0% {
+        background-position: -200% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
+@keyframes subtle-pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* ── Skeleton Loading ── */
+.skeleton {
+    background: linear-gradient(90deg,
+            var(--color-surface) 25%,
+            var(--color-surface-2) 50%,
+            var(--color-surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+}
+
+/* ── Leaflet Overrides — Dark Minimal ── */
+.leaflet-container {
+    background: #000 !important;
+    border-radius: var(--radius);
+}
+
+.leaflet-control-zoom a {
+    background: var(--color-surface) !important;
+    color: var(--color-silver) !important;
+    border-color: var(--color-border) !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background: var(--color-surface-2) !important;
+    color: var(--color-text) !important;
+}
+
+.leaflet-control-attribution {
+    background: rgba(0, 0, 0, 0.7) !important;
+    color: var(--color-text-muted) !important;
+    font-size: 10px !important;
+}
+
+.leaflet-control-attribution a {
+    color: var(--color-text-dim) !important;
+}
+
+.leaflet-popup-content-wrapper {
+    background: var(--color-surface) !important;
+    color: var(--color-text) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.leaflet-popup-tip {
+    background: var(--color-surface) !important;
+}
+
+/* ── Metallic Border Utility ── */
+.metallic-border {
+    border-image: linear-gradient(180deg, rgba(192, 192, 192, 0.3), rgba(192, 192, 192, 0.05)) 1;
+}

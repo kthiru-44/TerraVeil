@@ -1,0 +1,10 @@
+/* ── Node Telemetry ── */
+.node-telemetry {
+    padding: var(--space-4);
+}
+
+.node-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-3);
+}

@@ -1,0 +1,101 @@
+/* ═══════════════════════════════════════════
+   TerraVeil Design System — COSMEON Premium
+   Silver · Black · Metallic
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* ── Core Palette — Pure Black Foundation ── */
+  --color-bg: #000000;
+  --color-bg-alt: #050505;
+  --color-surface: #0a0a0a;
+  --color-surface-2: #111111;
+  --color-surface-3: #161616;
+  --color-border: #1e1e1e;
+  --color-border-2: #2a2a2a;
+
+  /* ── Text — White & Silver ── */
+  --color-text: #ffffff;
+  --color-text-dim: #a0a0a0;
+  --color-text-muted: #5a5a5a;
+  --color-silver: #c0c0c0;
+  --color-silver-dim: #808080;
+
+  /* ── Accent — Subtle White Glow ── */
+  --color-accent: #ffffff;
+  --color-accent-dim: rgba(255, 255, 255, 0.08);
+  --color-accent2: #c0c0c0;
+  --color-accent2-dim: rgba(192, 192, 192, 0.08);
+
+  /* ── Semantic ── */
+  --color-success: #4ade80;
+  --color-success-dim: rgba(74, 222, 128, 0.1);
+  --color-warning: #fbbf24;
+  --color-warning-dim: rgba(251, 191, 36, 0.1);
+  --color-danger: #f87171;
+  --color-danger-dim: rgba(248, 113, 113, 0.1);
+  --color-critical: #ef4444;
+  --color-critical-dim: rgba(239, 68, 68, 0.1);
+  --color-info: #93c5fd;
+
+  /* ── Risk tier colors ── */
+  --risk-low: #4ade80;
+  --risk-medium: #fbbf24;
+  --risk-high: #fb923c;
+  --risk-critical: #ef4444;
+
+  /* ── Typography ── */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs: 0.6875rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+  --text-5xl: 3.5rem;
+
+  /* ── Spacing ── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ── Radius ── */
+  --radius-sm: 6px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* ── Shadows — Minimal Silver Glow ── */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.04);
+  --shadow-silver: 0 0 30px rgba(192, 192, 192, 0.06);
+  --shadow-danger: 0 0 20px rgba(239, 68, 68, 0.15);
+
+  /* ── Glass — Frosted Black ── */
+  --glass-bg: rgba(10, 10, 10, 0.7);
+  --glass-bg-2: rgba(10, 10, 10, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-hover: rgba(255, 255, 255, 0.12);
+  --glass-blur: 20px;
+
+  /* ── Transitions ── */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration: 250ms;
+  --duration-slow: 500ms;
+  --duration-slower: 800ms;
+}

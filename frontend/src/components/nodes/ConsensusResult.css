@@ -1,0 +1,115 @@
+/* ── Consensus — Silver-Black ── */
+.consensus-result {
+    padding: var(--space-4);
+}
+
+.consensus-flow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+}
+
+.consensus-nodes {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.consensus-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: var(--space-2);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+    min-width: 48px;
+}
+
+.consensus-node.active {
+    border-color: rgba(74, 222, 128, 0.2);
+}
+
+.consensus-node.failed {
+    border-color: rgba(248, 113, 113, 0.15);
+    opacity: 0.4;
+}
+
+.c-node-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-success);
+    box-shadow: 0 0 4px rgba(74, 222, 128, 0.3);
+}
+
+.consensus-node.failed .c-node-dot {
+    background: var(--color-danger);
+    box-shadow: none;
+}
+
+.c-node-id {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--color-text-dim);
+}
+
+.consensus-arrow {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    transform-origin: left center;
+}
+
+.arrow-line {
+    width: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+}
+
+.arrow-head {
+    color: var(--color-silver);
+    font-size: 10px;
+}
+
+.consensus-badge {
+    flex: 1;
+    padding: var(--space-3);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.cb-header {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: var(--color-silver);
+}
+
+.cb-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.cb-stat {
+    font-size: var(--text-sm);
+    color: var(--color-text-dim);
+}
+
+.cb-stat strong {
+    color: #fff;
+    font-family: var(--font-mono);
+}
+
+.cb-divider {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+}
