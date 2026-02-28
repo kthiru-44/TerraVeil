@@ -20,12 +20,12 @@ export const getHistory = () =>
 export const getRisk = (region, date) =>
     api.get('/risk', { params: { region, date } }).then(r => r.data);
 
-/* ── Pipeline logs ── */
+/* ── Pipeline logs (backend returns {scan_id, scan_status, steps: [...]}) ── */
 export const getLogs = (scanId) =>
-    api.get(`/scans/${scanId}/logs`).then(r => r.data);
+    api.get(`/scans/${scanId}/logs`).then(r => r.data?.steps || []);
 
-/* ── Orbital nodes ── */
+/* ── Orbital nodes (backend returns {scan_id, nodes: [...], total_nodes}) ── */
 export const getNodes = (scanId) =>
-    api.get(`/nodes/${scanId}`).then(r => r.data);
+    api.get(`/nodes/${scanId}`).then(r => r.data?.nodes || []);
 
 export default api;

@@ -2,15 +2,36 @@ import { motion } from 'framer-motion';
 import './DroughtPanel.css';
 
 const SEVERITY_TIERS = [
-    { label: 'None', range: 'NDDI < 0.1', color: 'var(--color-success)', width: '10%' },
-    { label: 'Mild', range: '0.1 – 0.2', color: 'var(--color-warning)', width: '25%' },
-    { label: 'Moderate', range: '0.2 – 0.3', color: 'var(--risk-high)', width: '50%' },
-    { label: 'Severe', range: '0.3 – 0.4', color: 'var(--color-danger)', width: '75%' },
-    { label: 'Extreme', range: '> 0.4', color: 'var(--color-critical)', width: '95%' },
+    { label: 'None', range: 'NDDI < 0.1', color: 'var(--color-success)', threshold: 0.1 },
+    { label: 'Mild', range: '0.1 – 0.2', color: 'var(--color-warning)', threshold: 0.2 },
+    { label: 'Moderate', range: '0.2 – 0.3', color: 'var(--risk-high)', threshold: 0.3 },
+    { label: 'Severe', range: '0.3 – 0.4', color: 'var(--color-danger)', threshold: 0.4 },
+    { label: 'Extreme', range: '> 0.4', color: 'var(--color-critical)', threshold: 1.0 },
 ];
+
+function getBarWidth(nddiMean, threshold, i) {
+    // Fill bars based on actual NDDI mean value
+    if (nddiMean >= threshold) return '95%';
+    if (i === 0 && nddiMean >= 0) return `${Math.min(95, (nddiMean / 0.1) * 95)}%`;
+    const prevThreshold = SEVERITY_TIERS[i - 1]?.threshold || 0;
+    if (nddiMean > prevThreshold) {
+        const range = threshold - prevThreshold;
+        const progress = (nddiMean - prevThreshold) / range;
+        return `${Math.min(95, progress * 95)}%`;
+    }
+    return '0%';
+}
 
 export default function DroughtPanel({ data }) {
     const droughtArea = data?.drought_area_km2 || 0;
+    const nddiMean = data?.drought_nddi_mean || 0;
+    const severity = data?.drought_severity || 'NORMAL';
+
+    // Map severity to badge class
+    const severityBadge = severity === 'EMERGENCY' || severity === 'EXTREME'
+        ? 'badge-danger' : severity === 'WARNING' || severity === 'SEVERE'
+            ? 'badge-warning' : severity === 'WATCH' || severity === 'MODERATE'
+                ? 'badge-info' : 'badge-success';
 
     return (
         <motion.div
@@ -37,7 +58,7 @@ export default function DroughtPanel({ data }) {
                                 className="tier-bar-fill"
                                 style={{ backgroundColor: tier.color }}
                                 initial={{ width: 0 }}
-                                animate={{ width: tier.width }}
+                                animate={{ width: getBarWidth(nddiMean, tier.threshold, i) }}
                                 transition={{ delay: i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                             />
                         </div>
@@ -47,15 +68,15 @@ export default function DroughtPanel({ data }) {
 
             <div className="drought-stats">
                 <div className="drought-stat">
-                    <span className="d-stat-value">{droughtArea}</span>
+                    <span className="d-stat-value">{droughtArea.toFixed(1)}</span>
                     <span className="d-stat-label">km² affected</span>
                 </div>
                 <div className="drought-stat">
-                    <span className="d-stat-value">0.18</span>
+                    <span className="d-stat-value">{nddiMean.toFixed(2)}</span>
                     <span className="d-stat-label">Avg NDDI</span>
                 </div>
                 <div className="drought-stat">
-                    <span className="d-stat-value badge badge-warning">MILD</span>
+                    <span className={`d-stat-value badge ${severityBadge}`}>{severity}</span>
                     <span className="d-stat-label">Severity</span>
                 </div>
             </div>
