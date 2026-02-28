@@ -10,14 +10,19 @@ from app.db.database import init_db
 from app.api.routes import scan, risk, logs, nodes, history
 
 
+import logging
+
+log = logging.getLogger("terraveil")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup: init DB. Shutdown: nothing special."""
     init_db()
-    print("🛰  TerraVeil v3 — COSMEON Orbital Intelligence Layer")
-    print("📊 Database initialized")
-    print("🚀 Ready at http://localhost:8000")
-    print("📡 Demo: curl 'http://localhost:8000/api/v1/risk?region=kolhapur&date=2021-07-22'")
+    log.info("[TERRAVEIL] v3 -- COSMEON Orbital Intelligence Layer")
+    log.info("[DB] Database initialized")
+    log.info("[READY] http://localhost:8000")
+    log.info("[DEMO] curl 'http://localhost:8000/api/v1/risk?region=kolhapur&date=2021-07-22'")
     yield
 
 

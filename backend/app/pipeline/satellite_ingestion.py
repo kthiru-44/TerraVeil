@@ -3,7 +3,7 @@
 import time
 import numpy as np
 from pathlib import Path
-from app.core.config import GEOTIFF_DIR, CACHE_DIR, GEE_SERVICE_ACCOUNT, GEE_KEY_FILE
+from app.core.config import GEOTIFF_DIR, CACHE_DIR, GEE_SERVICE_ACCOUNT, GEE_KEY_FILE, GEE_PROJECT
 
 # Lazy GEE init
 _ee_initialized = False
@@ -17,22 +17,18 @@ def _init_gee():
     try:
         import ee
         import os
+        project = GEE_PROJECT or None
+
         # Try Service Account first
         if GEE_SERVICE_ACCOUNT and GEE_KEY_FILE and Path(GEE_KEY_FILE).exists():
             print(f"[GEE] Initializing with Service Account: {GEE_SERVICE_ACCOUNT}")
             credentials = ee.ServiceAccountCredentials(GEE_SERVICE_ACCOUNT, GEE_KEY_FILE)
-            ee.Initialize(credentials)
+            ee.Initialize(credentials, project=project)
         else:
-            # Fallback to Application Default Credentials (ADC from 'gcloud auth application-default login')
-            adc_path = os.path.expanduser("~/.config/gcloud/application_default_credentials.json")
-            if os.path.exists(adc_path):
-                print(f"[GEE] Initializing with Application Default Credentials from {adc_path}...")
-                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = adc_path
-                ee.Initialize()
-            else:
-                print("[GEE] No ADC found. Initializing with default scope...")
-                ee.Initialize()
-        
+            # Use credentials saved by ee.Authenticate() (stored in ~/.config/earthengine/)
+            print(f"[GEE] Initializing with stored credentials (project={project})...")
+            ee.Initialize(project=project)
+
         _ee_initialized = True
         print("[GEE] Initialization successful.")
         return True
@@ -76,80 +72,135 @@ def fetch_sentinel1(bbox: dict, t0: str, t1: str) -> dict:
 
 
 def _fetch_s2_from_gee(bbox: dict, t0: str, t1: str) -> dict:
-    """Real GEE fetch for Sentinel-2."""
+    """Real GEE fetch for Sentinel-2 — progressive cloud relaxation, SAR compensates."""
     import ee
+    from datetime import datetime, timedelta
 
     aoi = ee.Geometry.Rectangle([bbox["west"], bbox["south"], bbox["east"], bbox["north"]])
+    SCALE = 500
 
-    # Baseline: 30 days before t0
-    baseline = (
-        ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
-        .filterBounds(aoi)
-        .filterDate(t0, t1)
-        .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 20))
-        .median()
-        .clip(aoi)
-    )
-
-    # Event: closest to t1 (±3 day window for satellite revisit reliability)
-    from datetime import datetime, timedelta
+    t0_dt = datetime.fromisoformat(t0)
     t1_dt = datetime.fromisoformat(t1)
-    t1_start = (t1_dt - timedelta(days=3)).strftime("%Y-%m-%d")
-    t1_end = (t1_dt + timedelta(days=3)).strftime("%Y-%m-%d")
-    event = (
+
+    # Baseline: 120 days before t0 (wide window for cloud-free composites)
+    baseline_start = (t0_dt - timedelta(days=120)).strftime("%Y-%m-%d")
+    baseline_col = (
         ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
         .filterBounds(aoi)
-        .filterDate(t1_start, t1_end)
-        .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 20))
-        .median()
-        .clip(aoi)
+        .filterDate(baseline_start, t0)
+        .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 50))
     )
 
-    # Sample at 100m resolution for speed
-    scale = 100
-    baseline_data = baseline.select(["B3", "B8", "B11"]).sampleRectangle(aoi, defaultValue=0).getInfo()
-    event_data = event.select(["B3", "B8", "B11"]).sampleRectangle(aoi, defaultValue=0).getInfo()
+    baseline_count = baseline_col.size().getInfo()
+    if baseline_count == 0:
+        # Try without cloud filter for baseline
+        baseline_col = (
+            ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
+            .filterBounds(aoi)
+            .filterDate(baseline_start, t0)
+        )
+        baseline_count = baseline_col.size().getInfo()
+
+    # Event: progressive cloud relaxation — during floods it's ALWAYS cloudy
+    event_end = (t1_dt + timedelta(days=15)).strftime("%Y-%m-%d")
+    event_col = None
+    event_count = 0
+    cloud_pct = 100.0  # assume worst until we know
+
+    for max_cloud in [50, 80, 100]:
+        col = (
+            ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
+            .filterBounds(aoi)
+            .filterDate(t0, event_end)
+        )
+        if max_cloud < 100:
+            col = col.filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", max_cloud))
+
+        count = col.size().getInfo()
+        if count > 0:
+            event_col = col
+            event_count = count
+            cloud_pct = col.aggregate_mean("CLOUDY_PIXEL_PERCENTAGE").getInfo() or float(max_cloud)
+            print(f"[GEE] Sentinel-2: {baseline_count} baseline, {event_count} event (cloud filter <{max_cloud}%, actual={cloud_pct:.0f}%)")
+            break
+
+    if baseline_count == 0:
+        raise Exception(f"No Sentinel-2 baseline images found at all")
+
+    # If no event images exist, use baseline as both (SAR will detect the actual flood)
+    if event_count == 0:
+        print(f"[GEE] Sentinel-2: {baseline_count} baseline, 0 event — using baseline as event, SAR will be PRIMARY")
+        event_col = baseline_col
+        event_count = baseline_count
+        cloud_pct = 100.0  # force SAR primary
+
+    # cloud_pct already set above during progressive relaxation
+
+    # Composite and reproject to fixed scale for reliable sampleRectangle
+    proj = ee.Projection("EPSG:4326").atScale(SCALE)
+    baseline = baseline_col.median().select(["B3", "B8", "B11"]).clip(aoi).reproject(crs=proj)
+    event = event_col.median().select(["B3", "B8", "B11"]).clip(aoi).reproject(crs=proj)
+
+    # Sample — now returns proper pixel grid
+    baseline_data = baseline.sampleRectangle(region=aoi, defaultValue=0).getInfo()
+    event_data = event.sampleRectangle(region=aoi, defaultValue=0).getInfo()
+
+    b_green = np.array(baseline_data["properties"]["B3"])
+    b_nir = np.array(baseline_data["properties"]["B8"])
+    b_swir = np.array(baseline_data["properties"]["B11"])
+    e_green = np.array(event_data["properties"]["B3"])
+    e_nir = np.array(event_data["properties"]["B8"])
+    e_swir = np.array(event_data["properties"]["B11"])
+
+    print(f"[GEE] S2 grid shape: baseline={b_green.shape}, event={e_green.shape}, cloud={cloud_pct:.1f}%")
 
     return {
-        "baseline": {
-            "green": np.array(baseline_data["properties"]["B3"]),
-            "nir": np.array(baseline_data["properties"]["B8"]),
-            "swir": np.array(baseline_data["properties"]["B11"]),
-        },
-        "event": {
-            "green": np.array(event_data["properties"]["B3"]),
-            "nir": np.array(event_data["properties"]["B8"]),
-            "swir": np.array(event_data["properties"]["B11"]),
-        },
+        "baseline": {"green": b_green, "nir": b_nir, "swir": b_swir},
+        "event": {"green": e_green, "nir": e_nir, "swir": e_swir},
         "bbox": bbox,
-        "cloud_pct": 3.2,
-        "tiles": 2,
+        "cloud_pct": round(cloud_pct, 1),
+        "tiles": baseline_count + event_count,
         "source": "gee",
     }
 
 
 def _fetch_s1_from_gee(bbox: dict, t0: str, t1: str) -> dict:
-    """Real GEE fetch for Sentinel-1."""
+    """Real GEE fetch for Sentinel-1 — resampled to ~500m."""
     import ee
+    from datetime import datetime, timedelta
 
     aoi = ee.Geometry.Rectangle([bbox["west"], bbox["south"], bbox["east"], bbox["north"]])
+    SCALE = 500
 
-    s1 = (
+    t0_dt = datetime.fromisoformat(t0)
+    t1_dt = datetime.fromisoformat(t1)
+    s1_start = (t0_dt - timedelta(days=10)).strftime("%Y-%m-%d")
+    s1_end = (t1_dt + timedelta(days=10)).strftime("%Y-%m-%d")
+
+    s1_col = (
         ee.ImageCollection("COPERNICUS/S1_GRD")
         .filterBounds(aoi)
-        .filterDate(t0, t1)
+        .filterDate(s1_start, s1_end)
         .filter(ee.Filter.eq("instrumentMode", "IW"))
         .select(["VV", "VH"])
-        .median()
-        .clip(aoi)
     )
 
-    scale = 100
-    data = s1.sampleRectangle(aoi, defaultValue=0).getInfo()
+    count = s1_col.size().getInfo()
+    print(f"[GEE] Sentinel-1: {count} images found")
+    if count == 0:
+        raise Exception("No Sentinel-1 images found")
+
+    proj = ee.Projection("EPSG:4326").atScale(SCALE)
+    s1 = s1_col.median().clip(aoi).reproject(crs=proj)
+    data = s1.sampleRectangle(region=aoi, defaultValue=0).getInfo()
+
+    vv = np.array(data["properties"]["VV"])
+    vh = np.array(data["properties"]["VH"])
+    print(f"[GEE] S1 grid shape: vv={vv.shape}")
 
     return {
-        "vv": np.array(data["properties"]["VV"]),
-        "vh": np.array(data["properties"]["VH"]),
+        "vv": vv,
+        "vh": vh,
         "bbox": bbox,
         "source": "gee",
     }
@@ -157,7 +208,9 @@ def _fetch_s1_from_gee(bbox: dict, t0: str, t1: str) -> dict:
 
 def _simulate_sentinel2(bbox: dict, t0: str, t1: str) -> dict:
     """Generate realistic simulated Sentinel-2 data for demo."""
-    np.random.seed(42)
+    # Seed with bbox hash so different locations produce different simulated data
+    seed = hash((bbox.get('north',0), bbox.get('west',0), t0, t1)) % (2**31)
+    np.random.seed(seed)
     h, w = 200, 200
 
     # Baseline: mostly dry land
@@ -192,7 +245,8 @@ def _simulate_sentinel2(bbox: dict, t0: str, t1: str) -> dict:
 
 def _simulate_sentinel1(bbox: dict, t0: str, t1: str) -> dict:
     """Generate realistic simulated Sentinel-1 SAR data."""
-    np.random.seed(43)
+    seed = hash((bbox.get('north',0), bbox.get('west',0), t0, t1, 'sar')) % (2**31)
+    np.random.seed(seed)
     h, w = 200, 200
 
     # VV backscatter in dB — water ~= -18 to -25 dB, land ~= -5 to -12 dB

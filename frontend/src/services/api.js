@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: '/api/v1',
-    timeout: 30000,
+    timeout: 180000,
     headers: { 'Content-Type': 'application/json' },
 });
 
@@ -17,8 +17,13 @@ export const getHistory = () =>
     api.get('/history').then(r => r.data);
 
 /* ── Risk ── */
-export const getRisk = (region, date) =>
-    api.get('/risk', { params: { region, date } }).then(r => r.data);
+export const getRisk = (region, date, t0, t1, bbox) =>
+    api.get('/risk', {
+        params: {
+            region, date, t0, t1,
+            ...(bbox ? { north: bbox.north, south: bbox.south, east: bbox.east, west: bbox.west } : {}),
+        },
+    }).then(r => r.data);
 
 /* ── Pipeline logs (backend returns {scan_id, scan_status, steps: [...]}) ── */
 export const getLogs = (scanId) =>

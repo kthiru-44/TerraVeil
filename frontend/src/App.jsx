@@ -1,10 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import LoginPage from './components/auth/LoginPage.jsx';
 import BootSequence from './components/boot/BootSequence.jsx';
 import OrbitalIntro from './components/animation/OrbitalIntro.jsx';
 import HomePage from './components/home/HomePage.jsx';
 import ScanInput from './components/scan/ScanInput.jsx';
 import Dashboard from './components/dashboard/Dashboard.jsx';
+import { getRisk } from './services/api.js';
+import { normalizeRiskResponse, normalizeCustomScanResponse } from './services/normalize.js';
 import './App.css';
 
 /* ── Region Presets ── */
@@ -20,8 +22,36 @@ export const REGION_PRESETS = {
         label: 'Chennai, Tamil Nadu',
         bbox: [80.0, 12.8, 80.4, 13.2],
         center: [13.0, 80.2],
-        date_start: '2021-11-01',
-        date_end: '2021-11-10',
+        date_start: '2023-12-01',
+        date_end: '2023-12-15',
+    },
+    bangalore: {
+        label: 'Bangalore, Karnataka',
+        bbox: [77.45, 12.85, 77.75, 13.10],
+        center: [12.97, 77.59],
+        date_start: '2022-09-01',
+        date_end: '2022-09-10',
+    },
+    mumbai: {
+        label: 'Mumbai, Maharashtra',
+        bbox: [72.75, 18.90, 73.05, 19.20],
+        center: [19.07, 72.88],
+        date_start: '2023-07-10',
+        date_end: '2023-07-20',
+    },
+    delhi: {
+        label: 'Delhi NCR',
+        bbox: [76.95, 28.45, 77.35, 28.75],
+        center: [28.61, 77.21],
+        date_start: '2023-07-08',
+        date_end: '2023-07-15',
+    },
+    kerala: {
+        label: 'Kerala (Wayanad)',
+        bbox: [75.80, 11.55, 76.20, 11.85],
+        center: [11.69, 76.07],
+        date_start: '2024-07-25',
+        date_end: '2024-08-05',
     },
     pakistan: {
         label: 'Sindh, Pakistan',
@@ -64,9 +94,9 @@ export const DEMO_SCAN = {
     forecast_rec: 'High probability of continued flooding over next 72h. Evacuate low-lying areas immediately.',
     rainfall_72h: [45, 62, 38, 55, 70, 48, 58, 42, 65, 50, 72, 40],
     nodes: [
-        { node_id: 'COSMEON-LEO-07', status: 'active', confidence: 0.93, compute_ms: 620, bandwidth_ratio: 380000, flood_area_km2: 145.2 },
-        { node_id: 'COSMEON-LEO-11', status: 'active', confidence: 0.89, compute_ms: 710, bandwidth_ratio: 375000, flood_area_km2: 138.9 },
-        { node_id: 'COSMEON-LEO-14', status: 'active', confidence: 0.91, compute_ms: 580, bandwidth_ratio: 385000, flood_area_km2: 144.1 },
+        { node_id: 'SENTINEL-2A', status: 'active', confidence: 0.93, compute_ms: 620, bandwidth_ratio: 380000, flood_area_km2: 145.2 },
+        { node_id: 'SENTINEL-2B', status: 'active', confidence: 0.89, compute_ms: 710, bandwidth_ratio: 375000, flood_area_km2: 138.9 },
+        { node_id: 'SENTINEL-1A', status: 'active', confidence: 0.91, compute_ms: 580, bandwidth_ratio: 385000, flood_area_km2: 144.1 },
     ],
     infrastructure: [
         { type: 'hospital', name: 'Civil Hospital Kolhapur', coords: [16.705, 74.224], risk_level: 'HIGH' },
@@ -131,6 +161,25 @@ export default function App() {
     const [analysisStep, setAnalysisStep] = useState('input');
     const [scanConfig, setScanConfig] = useState(null);
 
+    // Synchronize animation completion + API data arrival
+    const pendingApiData = useRef(null);
+    const animDone = useRef(false);
+    const dataReady = useRef(false);
+
+    // Transition to results only when BOTH animation AND data are ready
+    const tryTransition = useCallback(() => {
+        if (animDone.current && dataReady.current) {
+            if (pendingApiData.current) {
+                setScanData(pendingApiData.current);
+                console.log('[APP] Using live backend data');
+            } else {
+                setScanData(DEMO_SCAN);
+                console.log('[APP] Using fallback demo data');
+            }
+            setAnalysisStep('results');
+        }
+    }, []);
+
     const handleLogin = useCallback((userData) => {
         setUser(userData);
         setShowBoot(true);
@@ -156,15 +205,47 @@ export default function App() {
     const handleLaunchScan = useCallback((config) => {
         setScanConfig(config);
         setAnalysisStep('scanning');
-    }, []);
+        pendingApiData.current = null;
+        animDone.current = false;
+        dataReady.current = false;
+
+        // Fire backend API call in parallel with orbital animation
+        const regionKey = config.selectedRegion || config.region;
+        const dateParam = config.date_end;
+        // Convert bbox array [west, south, east, north] to object
+        const bboxObj = config.bbox && config.bbox.length === 4
+            ? { west: config.bbox[0], south: config.bbox[1], east: config.bbox[2], north: config.bbox[3] }
+            : null;
+
+        getRisk(regionKey, dateParam, config.date_start, config.date_end, bboxObj)
+            .then((apiData) => {
+                const normalized = (regionKey === 'custom')
+                    ? normalizeCustomScanResponse(apiData)
+                    : normalizeRiskResponse(apiData, regionKey);
+                pendingApiData.current = normalized;
+                console.log('[API] Live data received from backend:', normalized.scan_id);
+            })
+            .catch((err) => {
+                console.warn('[API] Backend call failed, using demo data:', err.message);
+                pendingApiData.current = null;
+            })
+            .finally(() => {
+                dataReady.current = true;
+                tryTransition();
+            });
+    }, [tryTransition]);
 
     const handleScanAnimationComplete = useCallback(() => {
-        setAnalysisStep('results');
-    }, []);
+        animDone.current = true;
+        tryTransition();
+    }, [tryTransition]);
 
     const handleNewScan = useCallback(() => {
         setAnalysisStep('input');
         setScanConfig(null);
+        pendingApiData.current = null;
+        animDone.current = false;
+        dataReady.current = false;
     }, []);
 
     const loggedIn = !!user && !showBoot;

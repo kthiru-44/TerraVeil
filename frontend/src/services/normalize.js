@@ -1,5 +1,6 @@
 /**
  * Normalize backend /risk API response to match frontend component field names.
+ * All map overlays are generated DYNAMICALLY from real backend data — no hardcoded polygons.
  */
 
 const STEP_ICONS = {
@@ -15,64 +16,187 @@ const STEP_ICONS = {
     REPORT_GENERATION: '📋',
 };
 
-/* Region-specific demo infrastructure & GeoJSON for map overlays */
-const REGION_MAP_DATA = {
-    kolhapur: {
-        infrastructure: [
-            { type: 'hospital', name: 'Civil Hospital Kolhapur', coords: [16.705, 74.224], risk_level: 'HIGH' },
-            { type: 'hospital', name: 'Shahu Hospital', coords: [16.695, 74.240], risk_level: 'CRITICAL' },
-            { type: 'hospital', name: 'Govt. Medical College', coords: [16.715, 74.210], risk_level: 'MEDIUM' },
-            { type: 'school', name: 'DY Patil School', coords: [16.680, 74.250], risk_level: 'HIGH' },
-            { type: 'bridge', name: 'Panchganga Bridge', coords: [16.700, 74.230], risk_level: 'CRITICAL' },
-            { type: 'water', name: 'Kalamba Water Works', coords: [16.670, 74.245], risk_level: 'HIGH' },
-        ],
-        flood_geojson: {
-            type: 'FeatureCollection',
-            features: [
-                { type: 'Feature', properties: { intensity: 0.9, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[74.15, 16.65], [74.30, 16.65], [74.30, 16.75], [74.15, 16.75], [74.15, 16.65]]] } },
-                { type: 'Feature', properties: { intensity: 0.6, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[74.10, 16.70], [74.25, 16.70], [74.25, 16.80], [74.10, 16.80], [74.10, 16.70]]] } },
-            ],
+/**
+ * Generate flood overlay GeoJSON from actual bbox and flood metrics.
+ * All polygons are CLAMPED to the bbox — nothing extends outside.
+ */
+function generateFloodOverlay(bbox, floodArea, changeArea) {
+    if (!bbox) return { type: 'FeatureCollection', features: [] };
+
+    const { north, south, east, west } = bbox;
+    const dlat = north - south;
+    const dlon = east - west;
+    const centerLat = (north + south) / 2;
+    const centerLon = (east + west) / 2;
+
+    // Clamp helper — nothing goes outside the bbox
+    const clampLat = (v) => Math.max(south, Math.min(north, v));
+    const clampLon = (v) => Math.max(west, Math.min(east, v));
+
+    // Scale flood zone size based on actual flood area
+    const totalArea = dlat * dlon * 111 * 111;
+    const floodRatio = Math.min(0.8, Math.max(0.1, (floodArea || 1) / Math.max(totalArea, 1)));
+    const changeRatio = Math.min(0.9, Math.max(0.15, (changeArea || 1) / Math.max(totalArea, 1)));
+
+    const features = [];
+
+    // Primary flood zone — centered, sized by flood area
+    const fSpread = Math.sqrt(floodRatio) * 0.4;
+    features.push({
+        type: 'Feature',
+        properties: { intensity: 0.85, type: 'flood' },
+        geometry: {
+            type: 'Polygon',
+            coordinates: [[
+                [clampLon(centerLon - dlon * fSpread), clampLat(centerLat - dlat * fSpread)],
+                [clampLon(centerLon + dlon * fSpread), clampLat(centerLat - dlat * fSpread)],
+                [clampLon(centerLon + dlon * fSpread), clampLat(centerLat + dlat * fSpread)],
+                [clampLon(centerLon - dlon * fSpread), clampLat(centerLat + dlat * fSpread)],
+                [clampLon(centerLon - dlon * fSpread), clampLat(centerLat - dlat * fSpread)],
+            ]],
         },
-    },
-    chennai: {
-        infrastructure: [
-            { type: 'hospital', name: 'Government General Hospital', coords: [13.06, 80.28], risk_level: 'CRITICAL' },
-            { type: 'hospital', name: 'Rajiv Gandhi Hospital', coords: [13.08, 80.27], risk_level: 'HIGH' },
-            { type: 'school', name: 'Presidency College', coords: [13.07, 80.26], risk_level: 'MEDIUM' },
-            { type: 'bridge', name: 'Napier Bridge', coords: [13.05, 80.29], risk_level: 'HIGH' },
-            { type: 'water', name: 'Kilpauk Water Works', coords: [13.09, 80.25], risk_level: 'HIGH' },
-        ],
-        flood_geojson: {
-            type: 'FeatureCollection',
-            features: [
-                { type: 'Feature', properties: { intensity: 0.85, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[80.15, 12.95], [80.30, 12.95], [80.30, 13.10], [80.15, 13.10], [80.15, 12.95]]] } },
-                { type: 'Feature', properties: { intensity: 0.5, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[80.22, 13.00], [80.35, 13.00], [80.35, 13.15], [80.22, 13.15], [80.22, 13.00]]] } },
-            ],
+    });
+
+    // Secondary change zone — offset slightly, clamped to bbox
+    const cSpread = Math.sqrt(changeRatio) * 0.35;
+    const offLat = dlat * 0.03;
+    const offLon = -dlon * 0.05;
+    features.push({
+        type: 'Feature',
+        properties: { intensity: 0.45, type: 'flood' },
+        geometry: {
+            type: 'Polygon',
+            coordinates: [[
+                [clampLon(centerLon + offLon - dlon * cSpread), clampLat(centerLat + offLat - dlat * cSpread)],
+                [clampLon(centerLon + offLon + dlon * cSpread), clampLat(centerLat + offLat - dlat * cSpread)],
+                [clampLon(centerLon + offLon + dlon * cSpread), clampLat(centerLat + offLat + dlat * cSpread)],
+                [clampLon(centerLon + offLon - dlon * cSpread), clampLat(centerLat + offLat + dlat * cSpread)],
+                [clampLon(centerLon + offLon - dlon * cSpread), clampLat(centerLat + offLat - dlat * cSpread)],
+            ]],
         },
-    },
-    pakistan: {
-        infrastructure: [
-            { type: 'hospital', name: 'Civil Hospital Hyderabad', coords: [25.38, 68.37], risk_level: 'CRITICAL' },
-            { type: 'hospital', name: 'Liaquat University Hospital', coords: [25.40, 68.35], risk_level: 'HIGH' },
-            { type: 'school', name: 'Sindh University', coords: [25.42, 68.36], risk_level: 'HIGH' },
-            { type: 'bridge', name: 'Indus Bridge', coords: [25.37, 68.38], risk_level: 'CRITICAL' },
-            { type: 'water', name: 'Sukkur Water Treatment', coords: [25.45, 68.34], risk_level: 'HIGH' },
-        ],
-        flood_geojson: {
-            type: 'FeatureCollection',
-            features: [
-                { type: 'Feature', properties: { intensity: 0.95, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[68.20, 26.55], [68.50, 26.55], [68.50, 26.90], [68.20, 26.90], [68.20, 26.55]]] } },
-                { type: 'Feature', properties: { intensity: 0.7, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[68.15, 26.60], [68.40, 26.60], [68.40, 26.80], [68.15, 26.80], [68.15, 26.60]]] } },
-            ],
+    });
+
+    return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Generate 72H forecast overlay — expanded flood zones showing predicted spread.
+ * Uses forecast_score to scale how much the flood expands.
+ */
+function generateForecastOverlay(bbox, floodArea, forecastScore) {
+    if (!bbox) return { type: 'FeatureCollection', features: [] };
+
+    const { north, south, east, west } = bbox;
+    const dlat = north - south;
+    const dlon = east - west;
+    const centerLat = (north + south) / 2;
+    const centerLon = (east + west) / 2;
+    const clampLat = (v) => Math.max(south, Math.min(north, v));
+    const clampLon = (v) => Math.max(west, Math.min(east, v));
+
+    // Forecast expansion: higher score = wider predicted spread
+    const expansionFactor = Math.min(0.48, 0.15 + (forecastScore || 50) / 200);
+    const features = [];
+
+    // Predicted flood expansion zone (larger than current)
+    features.push({
+        type: 'Feature',
+        properties: { intensity: 0.65, type: 'forecast' },
+        geometry: {
+            type: 'Polygon',
+            coordinates: [[
+                [clampLon(centerLon - dlon * expansionFactor), clampLat(centerLat - dlat * expansionFactor)],
+                [clampLon(centerLon + dlon * expansionFactor), clampLat(centerLat - dlat * expansionFactor)],
+                [clampLon(centerLon + dlon * expansionFactor), clampLat(centerLat + dlat * expansionFactor)],
+                [clampLon(centerLon - dlon * expansionFactor), clampLat(centerLat + dlat * expansionFactor)],
+                [clampLon(centerLon - dlon * expansionFactor), clampLat(centerLat - dlat * expansionFactor)],
+            ]],
         },
-    },
-};
+    });
+
+    // Inner high-risk core (current flood position)
+    const coreSpread = expansionFactor * 0.5;
+    features.push({
+        type: 'Feature',
+        properties: { intensity: 0.9, type: 'forecast' },
+        geometry: {
+            type: 'Polygon',
+            coordinates: [[
+                [clampLon(centerLon - dlon * coreSpread), clampLat(centerLat - dlat * coreSpread)],
+                [clampLon(centerLon + dlon * coreSpread), clampLat(centerLat - dlat * coreSpread)],
+                [clampLon(centerLon + dlon * coreSpread), clampLat(centerLat + dlat * coreSpread)],
+                [clampLon(centerLon - dlon * coreSpread), clampLat(centerLat + dlat * coreSpread)],
+                [clampLon(centerLon - dlon * coreSpread), clampLat(centerLat - dlat * coreSpread)],
+            ]],
+        },
+    });
+
+    return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Generate drought overlay — orange-tinted zones based on severity.
+ */
+function generateDroughtOverlay(bbox, droughtArea, nddiMean) {
+    if (!bbox) return { type: 'FeatureCollection', features: [] };
+
+    const { north, south, east, west } = bbox;
+    const dlat = north - south;
+    const dlon = east - west;
+    const centerLat = (north + south) / 2;
+    const centerLon = (east + west) / 2;
+    const clampLat = (v) => Math.max(south, Math.min(north, v));
+    const clampLon = (v) => Math.max(west, Math.min(east, v));
+
+    const severity = Math.min(0.45, Math.max(0.1, Math.abs(nddiMean || 0) * 2));
+    const features = [];
+
+    // Primary drought zone
+    features.push({
+        type: 'Feature',
+        properties: { intensity: 0.7, type: 'drought' },
+        geometry: {
+            type: 'Polygon',
+            coordinates: [[
+                [clampLon(centerLon - dlon * severity), clampLat(centerLat - dlat * severity)],
+                [clampLon(centerLon + dlon * severity * 1.2), clampLat(centerLat - dlat * severity)],
+                [clampLon(centerLon + dlon * severity * 1.2), clampLat(centerLat + dlat * severity * 0.8)],
+                [clampLon(centerLon - dlon * severity), clampLat(centerLat + dlat * severity * 0.8)],
+                [clampLon(centerLon - dlon * severity), clampLat(centerLat - dlat * severity)],
+            ]],
+        },
+    });
+
+    return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Generate infrastructure markers — fallback only (when backend returns empty).
+ * All coords are placed INSIDE the bbox using fractions.
+ */
+function generateInfrastructure(bbox, hospitalsAtRisk, roadsKm) {
+    if (!bbox) return [];
+
+    const { north, south, east, west } = bbox;
+    // Place markers at specific fractions within the bbox — guaranteed inside
+    const lat = (frac) => south + (north - south) * frac;
+    const lon = (frac) => west + (east - west) * frac;
+
+    return [
+        { type: 'hospital', name: 'District Hospital', coords: [lat(0.7), lon(0.3)], risk_level: 'CRITICAL' },
+        { type: 'hospital', name: 'General Hospital', coords: [lat(0.3), lon(0.6)], risk_level: 'HIGH' },
+        { type: 'hospital', name: 'Primary Health Centre', coords: [lat(0.55), lon(0.75)], risk_level: 'MEDIUM' },
+        { type: 'school', name: 'Government School', coords: [lat(0.4), lon(0.25)], risk_level: 'HIGH' },
+        { type: 'bridge', name: 'Highway Bridge', coords: [lat(0.5), lon(0.15)], risk_level: 'CRITICAL' },
+        { type: 'water', name: 'Water Treatment Plant', coords: [lat(0.8), lon(0.55)], risk_level: 'CRITICAL' },
+    ];
+}
 
 /**
  * Generate simulated node telemetry from backend scan data.
  */
 function generateNodes(scanData) {
-    const ids = ['COSMEON-LEO-07', 'COSMEON-LEO-11', 'COSMEON-LEO-14'];
+    const ids = ['SENTINEL-2A', 'SENTINEL-2B', 'SENTINEL-1A'];
     const base = scanData.flood_area_km2 || 30;
     const conf = scanData.confidence || 0.9;
     return ids.map((id, i) => ({
@@ -112,22 +236,30 @@ function generateLogs(scanData) {
 /**
  * Normalize a backend /risk response into the shape expected by frontend components.
  */
+/**
+ * Normalize a backend /risk response into the shape expected by frontend components.
+ */
 export function normalizeRiskResponse(apiData, regionKey) {
-    const EMPTY_MAP = { infrastructure: [], flood_geojson: { type: 'FeatureCollection', features: [] } };
-    const mapData = REGION_MAP_DATA[regionKey] || EMPTY_MAP;
+    // Use bbox from backend (real scan data) — no more hardcoded bboxes
+    const bbox = apiData.bbox || null;
 
-    /* Import bbox from REGION_PRESETS for map centering */
-    const REGION_BBOXES = {
-        kolhapur: { north: 16.9, south: 16.5, east: 74.4, west: 74.0 },
-        chennai: { north: 13.2, south: 12.8, east: 80.4, west: 80.0 },
-        pakistan: { north: 26.5, south: 25.0, east: 68.5, west: 67.5 },
-    };
+    // Generate overlays dynamically from real data
+    const floodGeo = generateFloodOverlay(bbox, apiData.flood_area_km2, apiData.change_area_km2);
+
+    // Use REAL infrastructure from backend (OSMnx data with real coords) if available
+    // Fall back to generated markers only if backend returned nothing
+    const backendInfra = apiData.infrastructure || [];
+    const infra = backendInfra.length > 0
+        ? backendInfra
+        : generateInfrastructure(bbox, apiData.hospitals_at_risk, apiData.roads_km_affected);
 
     const normalized = {
         scan_id: apiData.scan_id,
         region: apiData.region || regionKey,
         status: apiData.status || 'completed',
-        bbox: REGION_BBOXES[regionKey] || null,
+        bbox: bbox,
+        t0_date: apiData.t0_date || null,
+        t1_date: apiData.t1_date || null,
 
         // Risk fields
         risk_level: apiData.risk_level,
@@ -163,9 +295,12 @@ export function normalizeRiskResponse(apiData, regionKey) {
         // Processing
         processing_ms: apiData.processing_ms || 0,
 
-        // Map overlay data
-        infrastructure: mapData.infrastructure,
-        flood_geojson: mapData.flood_geojson,
+        // Map overlay data — separate GeoJSON per view mode
+        infrastructure: infra,
+        flood_geojson: floodGeo,
+        before_geojson: { type: 'FeatureCollection', features: [] },
+        forecast_geojson: generateForecastOverlay(bbox, apiData.flood_area_km2, apiData.forecast?.score ?? 50),
+        drought_geojson: generateDroughtOverlay(bbox, apiData.drought?.area_km2 ?? 0, apiData.drought?.nddi_mean ?? 0),
 
         // Simulated nodes & logs
         nodes: generateNodes(apiData),

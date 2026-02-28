@@ -64,7 +64,7 @@ const STEPS = [
     { id: 'exit', at: 8000 },
 ];
 
-const NODE_NAMES = ['COSMEON-LEO-07', 'COSMEON-LEO-11', 'COSMEON-LEO-14'];
+const NODE_NAMES = ['SENTINEL-2A', 'SENTINEL-2B', 'SENTINEL-1A'];
 
 export default function OrbitalIntro({ onComplete, scanConfig }) {
     const [phase, setPhase] = useState('orbit');
@@ -251,7 +251,7 @@ export default function OrbitalIntro({ onComplete, scanConfig }) {
                             </div>
                             <div className="bottom-stat">
                                 <span className="stat-label">PROTOCOL</span>
-                                <span className="stat-value">COSMEON v3.1</span>
+                                <span className="stat-value">Copernicus ESA</span>
                             </div>
                             <div className="bottom-stat">
                                 <span className="stat-label">BANDWIDTH</span>

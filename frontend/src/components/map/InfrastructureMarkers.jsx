@@ -7,6 +7,8 @@ const ICONS = {
     school: '🏫',
     bridge: '🌉',
     water: '🚰',
+    water_treatment: '🚰',
+    road_network: '🛣️',
 };
 
 const RISK_BORDER = {
