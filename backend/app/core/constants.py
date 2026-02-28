@@ -1,0 +1,65 @@
+"""Constants used across the TerraVeil pipeline."""
+
+# Risk levels
+RISK_LOW = "LOW"
+RISK_MEDIUM = "MEDIUM"
+RISK_HIGH = "HIGH"
+RISK_CRITICAL = "CRITICAL"
+
+# Risk score thresholds
+RISK_THRESHOLDS = {
+    RISK_LOW: (0, 20),
+    RISK_MEDIUM: (20, 50),
+    RISK_HIGH: (50, 75),
+    RISK_CRITICAL: (75, 100),
+}
+
+# Pipeline step names (ordered)
+PIPELINE_STEPS = [
+    "SATELLITE_INGESTION",
+    "NDWI_COMPUTATION",
+    "SAR_ANALYSIS",
+    "CHANGE_DETECTION",
+    "OEC_INFERENCE",
+    "CONSENSUS",
+    "INFRASTRUCTURE_OVERLAY",
+    "RISK_CLASSIFICATION",
+    "FORECAST_72H",
+    "REPORT_GENERATION",
+]
+
+# Drought severity tiers
+DROUGHT_WATCH = "WATCH"          # NDDI 0.1–0.3
+DROUGHT_WARNING = "WARNING"      # NDDI 0.3–0.5
+DROUGHT_EMERGENCY = "EMERGENCY"  # NDDI > 0.5
+
+# NDWI flood threshold
+NDWI_FLOOD_THRESHOLD = 0.0
+NDWI_CHANGE_THRESHOLD = 0.2
+
+# OEC Node IDs
+OEC_NODE_IDS = ["COSMEON-LEO-07", "COSMEON-LEO-11", "COSMEON-LEO-14"]
+
+# Consensus
+MIN_NODES_FOR_CONSENSUS = 2
+CONFIDENCE_3_OF_3 = 0.97
+CONFIDENCE_2_OF_3 = 0.87
+REDUCED_CONFIDENCE_PENALTY = 0.15
+
+# Bandwidth
+RAW_TILE_SIZE_MB = 2300  # ~2.3 GB Sentinel-2 tile
+PACKET_SIZE_KB = 6.2     # output JSON packet
+
+# Forecast weights
+FORECAST_WEIGHT_NDWI = 0.35
+FORECAST_WEIGHT_RAINFALL = 0.35
+FORECAST_WEIGHT_ELEVATION = 0.30
+
+# Data sources
+DATA_SOURCES = ["sentinel-2", "sentinel-1", "landsat-8"]
+
+# Scan statuses
+STATUS_PENDING = "pending"
+STATUS_RUNNING = "running"
+STATUS_COMPLETED = "completed"
+STATUS_FAILED = "failed"

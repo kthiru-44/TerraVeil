@@ -13,7 +13,7 @@ const DROUGHT_COLORS = {
     low: 'rgba(245, 158, 11, 0.2)',
 };
 
-export default function FloodOverlay({ geojson, viewMode }) {
+export default function FloodOverlay({ geojson, viewMode, scanId }) {
     const style = useMemo(() => {
         return (feature) => {
             const intensity = feature?.properties?.intensity || 0.5;
@@ -38,7 +38,7 @@ export default function FloodOverlay({ geojson, viewMode }) {
 
     return (
         <GeoJSON
-            key={viewMode}
+            key={`${scanId || 'default'}-${viewMode}`}
             data={geojson}
             style={style}
             onEachFeature={(feature, layer) => {
