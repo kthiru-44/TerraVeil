@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import MapPanel from '../map/MapPanel.jsx';
 import FloodOverlay from '../map/FloodOverlay.jsx';
@@ -11,6 +11,7 @@ import ConsensusResult from '../nodes/ConsensusResult.jsx';
 import LogPanel from '../logs/LogPanel.jsx';
 import ForecastToggle from '../forecast/ForecastToggle.jsx';
 import DroughtPanel from '../forecast/DroughtPanel.jsx';
+import { generateReport } from '../../services/reportGenerator.js';
 import './Dashboard.css';
 
 const containerVariants = {
@@ -28,6 +29,31 @@ const itemVariants = {
 
 export default function Dashboard({ user, scanData, setScanData, scanConfig, regionPresets, onNewScan }) {
     const [viewMode, setViewMode] = useState('now');
+    const [exporting, setExporting] = useState(false);
+    const mapRef = useRef(null);
+
+    const handleExport = useCallback(async () => {
+        setExporting(true);
+        try {
+            const reportData = {
+                ...scanData,
+                region: scanConfig?.region || scanConfig?.selectedRegion || 'Unknown',
+                period: scanConfig?.date_start ? `${scanConfig.date_start} -> ${scanConfig.date_end}` : '',
+                bbox: {
+                    north: scanConfig?.north || scanData.bbox_north,
+                    south: scanConfig?.south || scanData.bbox_south,
+                    east: scanConfig?.east || scanData.bbox_east,
+                    west: scanConfig?.west || scanData.bbox_west,
+                },
+            };
+            const mapEl = mapRef.current?.querySelector('.leaflet-container') || mapRef.current;
+            await generateReport(reportData, mapEl);
+        } catch (err) {
+            console.error('Report generation failed:', err);
+        } finally {
+            setExporting(false);
+        }
+    }, [scanData, scanConfig]);
 
     const regionKey = scanConfig?.selectedRegion || 'kolhapur';
     const region = regionPresets?.[regionKey];
@@ -60,7 +86,7 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
                         <h2 className="section-title">{sectionTitle}</h2>
                         <ForecastToggle viewMode={viewMode} setViewMode={setViewMode} />
                     </div>
-                    <div className="map-container">
+                    <div className="map-container" ref={mapRef}>
                         <MapPanel center={mapCenter} zoom={13}>
                             <FloodOverlay geojson={activeGeoJson} viewMode={viewMode} scanId={scanData.scan_id} />
                             {viewMode !== 'before' && (
@@ -77,9 +103,18 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
                     <motion.div className="scan-summary glass-card" variants={itemVariants}>
                         <div className="ss-header">
                             <h3 className="panel-title">Scan Results</h3>
-                            <button className="ss-new-scan" onClick={onNewScan}>
-                                ↻ NEW SCAN
-                            </button>
+                            <div className="ss-actions">
+                                <button
+                                    className="ss-export-btn"
+                                    onClick={handleExport}
+                                    disabled={exporting}
+                                >
+                                    {exporting ? '⏳ Exporting...' : '📄 EXPORT PDF'}
+                                </button>
+                                <button className="ss-new-scan" onClick={onNewScan}>
+                                    ↻ NEW SCAN
+                                </button>
+                            </div>
                         </div>
                         <div className="ss-meta">
                             <span className="ss-tag">REGION</span>

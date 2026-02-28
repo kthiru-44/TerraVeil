@@ -55,12 +55,14 @@ export default function FloodOverlay({ geojson, viewMode, scanId }) {
                 const props = feature.properties;
                 const type = props?.type || 'flood';
                 const intensity = ((props?.intensity || 0) * 100).toFixed(0);
+                const zone = props?.zone || '';
                 const label = type === 'forecast' ? 'FORECAST ZONE' : type === 'drought' ? 'DROUGHT ZONE' : 'FLOOD ZONE';
                 const color = type === 'forecast' ? '#ff6432' : type === 'drought' ? '#f59e0b' : '#00d4ff';
+                const sevColor = intensity > 80 ? '#ef4444' : intensity > 60 ? '#f97316' : intensity > 40 ? '#f59e0b' : '#22c55e';
                 layer.bindPopup(
                     `<div style="font-family:Inter,sans-serif;font-size:13px;">
-            <strong style="color:${color};">${label}</strong><br/>
-            Intensity: <strong>${intensity}%</strong>
+            <strong style="color:${color};">${label}</strong>${zone ? ` · <span style="color:${sevColor};font-weight:700">${zone}</span>` : ''}<br/>
+            Intensity: <strong style="color:${sevColor}">${intensity}%</strong>
           </div>`
                 );
             }}

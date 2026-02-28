@@ -41,7 +41,11 @@ def init_db():
             status            TEXT DEFAULT 'pending',
             created_at        TEXT NOT NULL,
             processing_ms     INTEGER,
-            infrastructure_json TEXT
+            infrastructure_json TEXT,
+            flood_geojson_json TEXT,
+            before_geojson_json TEXT,
+            forecast_geojson_json TEXT,
+            drought_geojson_json TEXT
         )
     """)
 

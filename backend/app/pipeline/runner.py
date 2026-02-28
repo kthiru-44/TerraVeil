@@ -12,6 +12,7 @@ from app.pipeline.ndwi import compute_ndwi, detect_flood, compute_flood_probabil
 from app.pipeline.nddi import compute_ndvi, compute_nddi, classify_drought
 from app.pipeline.sar import compute_sar_flood_mask, fuse_masks, should_use_sar_primary
 from app.pipeline.ml_detector import predict_flood_mask, ensemble_with_physics
+from app.pipeline.flood_geojson import mask_to_geojson, generate_before_geojson, generate_forecast_geojson, generate_drought_geojson
 from app.pipeline.change_detection import detect_change
 from app.pipeline.infrastructure import fetch_infrastructure, intersect_with_flood, count_at_risk
 from app.pipeline.forecast import fetch_openmeteo_forecast, compute_ndwi_trend, compute_forecast_score, compute_drought_trajectory
@@ -298,6 +299,20 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
         lid = await db.log_step(scan_id, "REPORT_GENERATION", 10, "running")
         processing_ms = int((time.time() - pipeline_start) * 1000)
 
+        # Generate real GeoJSON overlays from actual pixel-level flood mask
+        try:
+            flood_geo = mask_to_geojson(combined_mask, ndwi_after, bbox, ndwi_before=ndwi_before)
+            before_geo = generate_before_geojson(ndwi_before, bbox)
+            forecast_geo = generate_forecast_geojson(combined_mask, ndwi_after, bbox, forecast_score)
+            nddi_arr = compute_nddi(ndvi_after, ndwi_after)
+            drought_geo = generate_drought_geojson(nddi_arr, bbox)
+        except Exception as geo_err:
+            print(f"[PIPELINE] GeoJSON generation failed: {geo_err}")
+            flood_geo = {"type": "FeatureCollection", "features": []}
+            before_geo = flood_geo
+            forecast_geo = flood_geo
+            drought_geo = flood_geo
+
         # Update scan record with all results
         await db.update_scan_results(
             scan_id,
@@ -318,6 +333,10 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
             drought_area_km2=round(drought_info["drought_area_km2"], 2),
             processing_ms=processing_ms,
             infrastructure_json=json.dumps(infra_serializable),
+            flood_geojson_json=json.dumps(flood_geo),
+            before_geojson_json=json.dumps(before_geo),
+            forecast_geojson_json=json.dumps(forecast_geo),
+            drought_geojson_json=json.dumps(drought_geo),
             status="completed",
         )
 

@@ -89,6 +89,16 @@ def _format_scan(scan: dict) -> dict:
         except Exception:
             pass
 
+    # Parse GeoJSON overlays
+    def _parse_geo(key):
+        raw = scan.get(key)
+        if raw:
+            try:
+                return _json.loads(raw)
+            except Exception:
+                pass
+        return None
+
     return {
         "scan_id": scan["scan_id"],
         "region": scan["region_name"],
@@ -125,4 +135,8 @@ def _format_scan(scan: dict) -> dict:
             "west": scan["bbox_west"],
         },
         "infrastructure": infra,
+        "flood_geojson": _parse_geo("flood_geojson_json"),
+        "before_geojson": _parse_geo("before_geojson_json"),
+        "forecast_geojson": _parse_geo("forecast_geojson_json"),
+        "drought_geojson": _parse_geo("drought_geojson_json"),
     }
