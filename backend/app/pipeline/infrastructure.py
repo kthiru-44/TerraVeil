@@ -6,20 +6,25 @@ import numpy as np
 def fetch_infrastructure(bbox: dict) -> list[dict]:
     """
     Fetch infrastructure from OpenStreetMap for the given bbox.
-    Uses OSMnx or falls back to simulated data.
-
-    Returns list of infrastructure items with type, name, lat, lon.
+    Uses OSMnx with a timeout, falls back to simulated data.
     """
     try:
-        return _fetch_from_osm(bbox)
+        import osmnx  # quick import test
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(_fetch_from_osm, bbox)
+            return future.result(timeout=15)
     except Exception as e:
-        print(f"[INFRA] OSM fetch failed: {e}. Using simulated data.")
+        print(f"[INFRA] OSM fetch failed/timed out: {e}. Using simulated data.")
         return _simulate_infrastructure(bbox)
 
 
 def _fetch_from_osm(bbox: dict) -> list[dict]:
-    """Real OSMnx fetch."""
+    """Real OSMnx fetch — compatible with OSMnx 2.x."""
     import osmnx as ox
+
+    # OSMnx 2.x uses bbox=(west, south, east, north) tuple
+    osm_bbox = (bbox["west"], bbox["south"], bbox["east"], bbox["north"])
 
     tags_map = {
         "hospital": {"amenity": "hospital"},
@@ -31,10 +36,7 @@ def _fetch_from_osm(bbox: dict) -> list[dict]:
     results = []
     for infra_type, tags in tags_map.items():
         try:
-            gdf = ox.features_from_bbox(
-                bbox["north"], bbox["south"], bbox["east"], bbox["west"],
-                tags=tags,
-            )
+            gdf = ox.features_from_bbox(bbox=osm_bbox, tags=tags)
             for _, row in gdf.iterrows():
                 centroid = row.geometry.centroid
                 name = row.get("name", f"Unnamed {infra_type}")
@@ -45,15 +47,13 @@ def _fetch_from_osm(bbox: dict) -> list[dict]:
                     "lon": centroid.x,
                     "risk_level": "UNKNOWN",
                 })
-        except Exception:
+        except Exception as e:
+            print(f"[INFRA] Failed to fetch {infra_type}: {e}")
             continue
 
     # Also fetch major roads
     try:
-        G = ox.graph_from_bbox(
-            bbox["north"], bbox["south"], bbox["east"], bbox["west"],
-            network_type="drive",
-        )
+        G = ox.graph_from_bbox(bbox=osm_bbox, network_type="drive")
         edges = ox.graph_to_gdfs(G, nodes=False)
         total_road_km = edges["length"].sum() / 1000 if "length" in edges.columns else 0
         results.append({
@@ -64,8 +64,9 @@ def _fetch_from_osm(bbox: dict) -> list[dict]:
             "risk_level": "UNKNOWN",
             "total_km": total_road_km,
         })
-    except Exception:
-        pass
+        print(f"[INFRA] Found {len(results)} features, {total_road_km:.1f} km roads")
+    except Exception as e:
+        print(f"[INFRA] Road fetch failed: {e}")
 
     return results
 
@@ -129,8 +130,9 @@ def intersect_with_flood(infrastructure: list[dict], flood_mask: np.ndarray,
 
 def count_at_risk(infrastructure: list[dict]) -> dict:
     """Count infrastructure at risk (MEDIUM or above)."""
-    hospitals = sum(1 for i in infrastructure if i["type"] == "hospital" and i["risk_level"] in ("HIGH", "CRITICAL"))
-    roads_km = sum(i.get("total_km", 0) for i in infrastructure if i["type"] == "road_network" and i["risk_level"] in ("HIGH", "CRITICAL"))
+    at_risk = ("MEDIUM", "HIGH", "CRITICAL")
+    hospitals = sum(1 for i in infrastructure if i["type"] == "hospital" and i["risk_level"] in at_risk)
+    roads_km = sum(i.get("total_km", 0) for i in infrastructure if i["type"] == "road_network" and i["risk_level"] in at_risk)
 
     return {
         "hospitals_at_risk": hospitals,

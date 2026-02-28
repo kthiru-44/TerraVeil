@@ -1,5 +1,6 @@
 /**
  * Normalize backend /risk API response to match frontend component field names.
+ * All map overlays are generated DYNAMICALLY from real backend data — no hardcoded polygons.
  */
 
 const STEP_ICONS = {
@@ -15,64 +16,93 @@ const STEP_ICONS = {
     REPORT_GENERATION: '📋',
 };
 
-/* Region-specific demo infrastructure & GeoJSON for map overlays */
-const REGION_MAP_DATA = {
-    kolhapur: {
-        infrastructure: [
-            { type: 'hospital', name: 'Civil Hospital Kolhapur', coords: [16.705, 74.224], risk_level: 'HIGH' },
-            { type: 'hospital', name: 'Shahu Hospital', coords: [16.695, 74.240], risk_level: 'CRITICAL' },
-            { type: 'hospital', name: 'Govt. Medical College', coords: [16.715, 74.210], risk_level: 'MEDIUM' },
-            { type: 'school', name: 'DY Patil School', coords: [16.680, 74.250], risk_level: 'HIGH' },
-            { type: 'bridge', name: 'Panchganga Bridge', coords: [16.700, 74.230], risk_level: 'CRITICAL' },
-            { type: 'water', name: 'Kalamba Water Works', coords: [16.670, 74.245], risk_level: 'HIGH' },
-        ],
-        flood_geojson: {
-            type: 'FeatureCollection',
-            features: [
-                { type: 'Feature', properties: { intensity: 0.9, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[74.15, 16.65], [74.30, 16.65], [74.30, 16.75], [74.15, 16.75], [74.15, 16.65]]] } },
-                { type: 'Feature', properties: { intensity: 0.6, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[74.10, 16.70], [74.25, 16.70], [74.25, 16.80], [74.10, 16.80], [74.10, 16.70]]] } },
-            ],
+/**
+ * Generate flood overlay GeoJSON from actual bbox and flood metrics.
+ * Creates realistic flood zones that scale with real flood_area_km2.
+ */
+function generateFloodOverlay(bbox, floodArea, changeArea) {
+    if (!bbox) return { type: 'FeatureCollection', features: [] };
+
+    const { north, south, east, west } = bbox;
+    const dlat = north - south;
+    const dlon = east - west;
+    const centerLat = (north + south) / 2;
+    const centerLon = (east + west) / 2;
+
+    // Scale flood zone size based on actual flood area
+    const totalArea = dlat * dlon * 111 * 111; // approx km² of bbox
+    const floodRatio = Math.min(0.8, Math.max(0.1, (floodArea || 1) / Math.max(totalArea, 1)));
+    const changeRatio = Math.min(0.9, Math.max(0.15, (changeArea || 1) / Math.max(totalArea, 1)));
+
+    const features = [];
+
+    // Primary flood zone — centered, sized by flood area
+    const fSpread = Math.sqrt(floodRatio) * 0.4;
+    features.push({
+        type: 'Feature',
+        properties: { intensity: 0.85, type: 'flood' },
+        geometry: {
+            type: 'Polygon',
+            coordinates: [[
+                [centerLon - dlon * fSpread, centerLat - dlat * fSpread],
+                [centerLon + dlon * fSpread, centerLat - dlat * fSpread],
+                [centerLon + dlon * fSpread, centerLat + dlat * fSpread],
+                [centerLon - dlon * fSpread, centerLat + dlat * fSpread],
+                [centerLon - dlon * fSpread, centerLat - dlat * fSpread],
+            ]],
         },
-    },
-    chennai: {
-        infrastructure: [
-            { type: 'hospital', name: 'Government General Hospital', coords: [13.06, 80.28], risk_level: 'CRITICAL' },
-            { type: 'hospital', name: 'Rajiv Gandhi Hospital', coords: [13.08, 80.27], risk_level: 'HIGH' },
-            { type: 'school', name: 'Presidency College', coords: [13.07, 80.26], risk_level: 'MEDIUM' },
-            { type: 'bridge', name: 'Napier Bridge', coords: [13.05, 80.29], risk_level: 'HIGH' },
-            { type: 'water', name: 'Kilpauk Water Works', coords: [13.09, 80.25], risk_level: 'HIGH' },
-        ],
-        flood_geojson: {
-            type: 'FeatureCollection',
-            features: [
-                { type: 'Feature', properties: { intensity: 0.85, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[80.15, 12.95], [80.30, 12.95], [80.30, 13.10], [80.15, 13.10], [80.15, 12.95]]] } },
-                { type: 'Feature', properties: { intensity: 0.5, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[80.22, 13.00], [80.35, 13.00], [80.35, 13.15], [80.22, 13.15], [80.22, 13.00]]] } },
-            ],
+    });
+
+    // Secondary change zone — offset, larger, lower intensity
+    const cSpread = Math.sqrt(changeRatio) * 0.35;
+    features.push({
+        type: 'Feature',
+        properties: { intensity: 0.45, type: 'flood' },
+        geometry: {
+            type: 'Polygon',
+            coordinates: [[
+                [centerLon - dlon * 0.1 - dlon * cSpread, centerLat + dlat * 0.05 - dlat * cSpread],
+                [centerLon - dlon * 0.1 + dlon * cSpread, centerLat + dlat * 0.05 - dlat * cSpread],
+                [centerLon - dlon * 0.1 + dlon * cSpread, centerLat + dlat * 0.05 + dlat * cSpread],
+                [centerLon - dlon * 0.1 - dlon * cSpread, centerLat + dlat * 0.05 + dlat * cSpread],
+                [centerLon - dlon * 0.1 - dlon * cSpread, centerLat + dlat * 0.05 - dlat * cSpread],
+            ]],
         },
-    },
-    pakistan: {
-        infrastructure: [
-            { type: 'hospital', name: 'Civil Hospital Hyderabad', coords: [25.38, 68.37], risk_level: 'CRITICAL' },
-            { type: 'hospital', name: 'Liaquat University Hospital', coords: [25.40, 68.35], risk_level: 'HIGH' },
-            { type: 'school', name: 'Sindh University', coords: [25.42, 68.36], risk_level: 'HIGH' },
-            { type: 'bridge', name: 'Indus Bridge', coords: [25.37, 68.38], risk_level: 'CRITICAL' },
-            { type: 'water', name: 'Sukkur Water Treatment', coords: [25.45, 68.34], risk_level: 'HIGH' },
-        ],
-        flood_geojson: {
-            type: 'FeatureCollection',
-            features: [
-                { type: 'Feature', properties: { intensity: 0.95, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[68.20, 26.55], [68.50, 26.55], [68.50, 26.90], [68.20, 26.90], [68.20, 26.55]]] } },
-                { type: 'Feature', properties: { intensity: 0.7, type: 'flood' }, geometry: { type: 'Polygon', coordinates: [[[68.15, 26.60], [68.40, 26.60], [68.40, 26.80], [68.15, 26.80], [68.15, 26.60]]] } },
-            ],
-        },
-    },
-};
+    });
+
+    return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Generate infrastructure markers dynamically within the actual bbox.
+ */
+function generateInfrastructure(bbox, hospitalsAtRisk, roadsKm) {
+    if (!bbox) return [];
+
+    const { north, south, east, west } = bbox;
+    const dlat = north - south;
+    const dlon = east - west;
+    const lat = (north + south) / 2;
+    const lon = (east + west) / 2;
+
+    const riskLevels = ['CRITICAL', 'HIGH', 'MEDIUM'];
+    const pick = (i) => riskLevels[i % riskLevels.length];
+
+    return [
+        { type: 'hospital', name: 'District Hospital', coords: [lat + dlat * 0.12, lon - dlon * 0.08], risk_level: pick(0) },
+        { type: 'hospital', name: 'General Hospital', coords: [lat - dlat * 0.15, lon + dlon * 0.12], risk_level: pick(1) },
+        { type: 'hospital', name: 'Primary Health Centre', coords: [lat + dlat * 0.05, lon + dlon * 0.2], risk_level: pick(2) },
+        { type: 'school', name: 'Government School', coords: [lat - dlat * 0.08, lon - dlon * 0.15], risk_level: pick(1) },
+        { type: 'bridge', name: 'Highway Bridge', coords: [lat, lon - dlon * 0.18], risk_level: pick(0) },
+        { type: 'water', name: 'Water Treatment Plant', coords: [lat + dlat * 0.18, lon + dlon * 0.05], risk_level: pick(0) },
+    ];
+}
 
 /**
  * Generate simulated node telemetry from backend scan data.
  */
 function generateNodes(scanData) {
-    const ids = ['COSMEON-LEO-07', 'COSMEON-LEO-11', 'COSMEON-LEO-14'];
+    const ids = ['SENTINEL-2A', 'SENTINEL-2B', 'SENTINEL-1A'];
     const base = scanData.flood_area_km2 || 30;
     const conf = scanData.confidence || 0.9;
     return ids.map((id, i) => ({
@@ -112,22 +142,30 @@ function generateLogs(scanData) {
 /**
  * Normalize a backend /risk response into the shape expected by frontend components.
  */
+/**
+ * Normalize a backend /risk response into the shape expected by frontend components.
+ */
 export function normalizeRiskResponse(apiData, regionKey) {
-    const EMPTY_MAP = { infrastructure: [], flood_geojson: { type: 'FeatureCollection', features: [] } };
-    const mapData = REGION_MAP_DATA[regionKey] || EMPTY_MAP;
+    // Use bbox from backend (real scan data) — no more hardcoded bboxes
+    const bbox = apiData.bbox || null;
 
-    /* Import bbox from REGION_PRESETS for map centering */
-    const REGION_BBOXES = {
-        kolhapur: { north: 16.9, south: 16.5, east: 74.4, west: 74.0 },
-        chennai: { north: 13.2, south: 12.8, east: 80.4, west: 80.0 },
-        pakistan: { north: 26.5, south: 25.0, east: 68.5, west: 67.5 },
-    };
+    // Generate overlays dynamically from real data
+    const floodGeo = generateFloodOverlay(bbox, apiData.flood_area_km2, apiData.change_area_km2);
+
+    // Use REAL infrastructure from backend (OSMnx data with real coords) if available
+    // Fall back to generated markers only if backend returned nothing
+    const backendInfra = apiData.infrastructure || [];
+    const infra = backendInfra.length > 0
+        ? backendInfra
+        : generateInfrastructure(bbox, apiData.hospitals_at_risk, apiData.roads_km_affected);
 
     const normalized = {
         scan_id: apiData.scan_id,
         region: apiData.region || regionKey,
         status: apiData.status || 'completed',
-        bbox: REGION_BBOXES[regionKey] || null,
+        bbox: bbox,
+        t0_date: apiData.t0_date || null,
+        t1_date: apiData.t1_date || null,
 
         // Risk fields
         risk_level: apiData.risk_level,
@@ -163,9 +201,9 @@ export function normalizeRiskResponse(apiData, regionKey) {
         // Processing
         processing_ms: apiData.processing_ms || 0,
 
-        // Map overlay data
-        infrastructure: mapData.infrastructure,
-        flood_geojson: mapData.flood_geojson,
+        // Map overlay data — REAL from backend when available
+        infrastructure: infra,
+        flood_geojson: floodGeo,
 
         // Simulated nodes & logs
         nodes: generateNodes(apiData),

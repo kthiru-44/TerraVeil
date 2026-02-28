@@ -40,7 +40,8 @@ def init_db():
             drought_area_km2  REAL,
             status            TEXT DEFAULT 'pending',
             created_at        TEXT NOT NULL,
-            processing_ms     INTEGER
+            processing_ms     INTEGER,
+            infrastructure_json TEXT
         )
     """)
 

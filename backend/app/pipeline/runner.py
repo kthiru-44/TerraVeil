@@ -1,6 +1,7 @@
 """Pipeline runner — orchestrates all 10 pipeline steps with DB logging."""
 
 import time
+import json
 import asyncio
 import numpy as np
 from datetime import datetime, timezone
@@ -52,9 +53,21 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
 
         # ── Step 2: NDWI COMPUTATION ────────────────────────────
         lid = await db.log_step(scan_id, "NDWI_COMPUTATION", 2, "running")
+
+        # Compute pixel area from bbox and grid dimensions
+        import math
+        dlat = abs(bbox["north"] - bbox["south"])
+        dlon = abs(bbox["east"] - bbox["west"])
+        lat_mid = (bbox["north"] + bbox["south"]) / 2
+        bbox_width_km = dlon * 111.32 * math.cos(math.radians(lat_mid))
+        bbox_height_km = dlat * 110.574
+        grid_h, grid_w = s2_data["baseline"]["green"].shape
+        pixel_area_km2 = (bbox_width_km * bbox_height_km) / (grid_h * grid_w)
+        print(f"[PIPELINE] Grid {grid_h}x{grid_w}, pixel_area={pixel_area_km2:.4f} km²")
+
         ndwi_before = compute_ndwi(s2_data["baseline"]["green"], s2_data["baseline"]["nir"])
         ndwi_after = compute_ndwi(s2_data["event"]["green"], s2_data["event"]["nir"])
-        flood_mask, flood_area_km2, ndwi_mean = detect_flood(ndwi_before, ndwi_after)
+        flood_mask, flood_area_km2, ndwi_mean = detect_flood(ndwi_before, ndwi_after, pixel_area_km2=pixel_area_km2)
 
         # NDDI for drought
         ndvi_after = compute_ndvi(s2_data["event"]["nir"], s2_data["event"]["green"])
@@ -72,24 +85,34 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
         # ── Step 3: SAR ANALYSIS ────────────────────────────────
         lid = await db.log_step(scan_id, "SAR_ANALYSIS", 3, "running")
         sar_mask, sar_threshold = compute_sar_flood_mask(s1_data["vv"])
-        use_sar_primary = should_use_sar_primary(s2_data.get("cloud_pct", 0))
+
+        # Force SAR-primary when: S2 was simulated but S1 is real, OR high cloud cover
+        s2_simulated = s2_data.get("source") == "simulated"
+        s1_real = s1_data.get("source") == "gee"
+        cloud = s2_data.get("cloud_pct", 0)
+        use_sar_primary = should_use_sar_primary(cloud) or (s2_simulated and s1_real)
 
         if use_sar_primary:
             combined_mask = sar_mask
+            # When SAR is primary, recompute flood area from SAR
+            flood_area_km2 = float(np.sum(sar_mask) * pixel_area_km2)
+            print(f"[PIPELINE] SAR PRIMARY (cloud={cloud:.0f}%, s2={s2_data.get('source')}, s1={s1_data.get('source')})")
         else:
             combined_mask = fuse_masks(flood_mask, sar_mask)
+            print(f"[PIPELINE] FUSED S2+SAR (cloud={cloud:.0f}%)")
 
-        # Recompute area with fused mask
-        fused_flood_area = float(np.sum(combined_mask) * 0.01)
+        # Recompute area with fused/sar mask
+        fused_flood_area = float(np.sum(combined_mask) * pixel_area_km2)
         await db.complete_log_step(lid, output_summary={
             "sar_threshold_db": round(sar_threshold, 2),
             "sar_primary": use_sar_primary,
+            "cloud_pct": round(cloud, 1),
             "fused_flood_area_km2": round(fused_flood_area, 2),
         })
 
         # ── Step 4: CHANGE DETECTION ───────────────────────────
         lid = await db.log_step(scan_id, "CHANGE_DETECTION", 4, "running")
-        delta, change_mask, change_area_km2 = detect_change(ndwi_before, ndwi_after)
+        delta, change_mask, change_area_km2 = detect_change(ndwi_before, ndwi_after, pixel_area_km2=pixel_area_km2)
         await db.complete_log_step(lid, output_summary={
             "change_area_km2": round(change_area_km2, 2),
             "mean_delta": round(float(np.mean(delta)), 4),
@@ -150,6 +173,18 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
         infra = intersect_with_flood(infra, combined_mask, bbox)
         risk_counts = count_at_risk(infra)
         pop_affected = estimate_population(final_flood_area)
+
+        # Convert infrastructure to serializable format with coords key
+        infra_serializable = []
+        for item in infra:
+            infra_serializable.append({
+                "type": item["type"],
+                "name": item["name"],
+                "coords": [item["lat"], item["lon"]],
+                "risk_level": item["risk_level"],
+                "total_km": item.get("total_km", 0),
+            })
+
         await db.complete_log_step(lid, output_summary={
             "total_features": len(infra),
             "hospitals_at_risk": risk_counts["hospitals_at_risk"],
@@ -227,6 +262,7 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
             drought_severity=drought_info["severity"],
             drought_area_km2=round(drought_info["drought_area_km2"], 2),
             processing_ms=processing_ms,
+            infrastructure_json=json.dumps(infra_serializable),
             status="completed",
         )
 

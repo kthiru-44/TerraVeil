@@ -10,7 +10,7 @@ from app.core.constants import RAW_TILE_SIZE_MB, PACKET_SIZE_KB
 
 class OrbitalNode:
     """
-    Simulates a COSMEON-LEO satellite node performing onboard inference.
+    Simulates an ESA Sentinel satellite node performing onboard inference.
 
     Each node:
     - Processes an independent geographic tile
