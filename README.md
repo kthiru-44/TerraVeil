@@ -13,12 +13,6 @@
 [![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)](https://leafletjs.com)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 
-<br />
-
-![Tests](https://img.shields.io/badge/Tests-69_Passed-4ade80?style=flat-square&logo=pytest&logoColor=white)
-![Coverage](https://img.shields.io/badge/Coverage-94%25-22c55e?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-a78bfa?style=flat-square)
-![Status](https://img.shields.io/badge/Status-Production_Ready-38bdf8?style=flat-square)
 
 <br />
 
