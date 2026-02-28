@@ -1,0 +1,486 @@
+/* ═══════════════════════════════════════════
+   Boot Sequence — God-Level Loading Page
+   ═══════════════════════════════════════════ */
+
+.boot-sequence {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+    font-family: var(--font-mono);
+}
+
+/* ── Noise texture ── */
+.boot-bg-noise {
+    position: absolute;
+    inset: -50%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.015;
+    animation: noise-drift 0.3s steps(3) infinite;
+    pointer-events: none;
+}
+
+/* ── Hex particle field ── */
+.boot-hex-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.hex-particle {
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0;
+    animation: particle-fade 4s ease-in-out infinite;
+}
+
+/* ── Scan lines ── */
+.boot-scanlines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.scanline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.02) 20%,
+            rgba(255, 255, 255, 0.04) 50%,
+            rgba(255, 255, 255, 0.02) 80%,
+            transparent 100%);
+    animation: scanline-move 5s linear infinite;
+}
+
+/* ── Vignette ── */
+.boot-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.6) 100%);
+    pointer-events: none;
+}
+
+/* ── Central construct ── */
+.boot-center {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+    margin-top: 12vh;
+}
+
+.boot-rings-svg {
+    width: 220px;
+    height: 220px;
+    margin-bottom: var(--space-4);
+}
+
+/* ── Title with glitch ── */
+.boot-title-block {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.boot-title {
+    font-family: var(--font-sans);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    letter-spacing: 0.5em;
+    color: #fff;
+    margin: 0;
+    position: relative;
+}
+
+/* Glitch pseudo-elements */
+.boot-title::before,
+.boot-title::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    opacity: 0;
+}
+
+.boot-title::before {
+    color: #ff004c;
+}
+
+.boot-title::after {
+    color: #00e4ff;
+}
+
+.glitch-active .boot-title::before {
+    opacity: 0.6;
+    animation: glitch-top 0.1s steps(2) infinite;
+}
+
+.glitch-active .boot-title::after {
+    opacity: 0.6;
+    animation: glitch-bottom 0.1s steps(2) infinite;
+}
+
+.boot-subtitle {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.35em;
+    color: rgba(192, 192, 192, 0.4);
+    margin: 0;
+}
+
+/* ── Progress area ── */
+.boot-progress-area {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(460px, 85vw);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    background: rgba(0, 0, 0, 0.6);
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius);
+}
+
+/* ── Boot log ── */
+.boot-log {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.boot-log-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    transition: all 0.3s ease;
+}
+
+.boot-log-line.pending {
+    opacity: 0;
+}
+
+.boot-log-line.active {
+    color: #fff;
+}
+
+.boot-log-line.active .log-icon {
+    animation: pulse-glow 0.8s ease-in-out infinite;
+}
+
+.boot-log-line.done {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.boot-log-line.done .log-status {
+    color: rgba(74, 222, 128, 0.6);
+}
+
+.log-icon {
+    font-size: 12px;
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.log-label {
+    flex: 1;
+}
+
+.log-status {
+    font-size: 10px;
+    min-width: 16px;
+    text-align: right;
+}
+
+.boot-log-line.active .log-status {
+    animation: blink-dots 1s step-end infinite;
+}
+
+/* ── Progress bar ── */
+.boot-progress-bar {
+    position: relative;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 1px;
+    overflow: visible;
+}
+
+.boot-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.6));
+    border-radius: 1px;
+    position: relative;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+}
+
+.boot-progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.2);
+}
+
+.boot-progress-pct {
+    position: absolute;
+    right: 0;
+    top: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Data readout ── */
+.boot-readout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.15);
+}
+
+.readout-sep {
+    color: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Corner brackets ── */
+.boot-corner {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    z-index: 3;
+}
+
+.boot-corner::before,
+.boot-corner::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.boot-corner-tl {
+    top: 24px;
+    left: 24px;
+}
+
+.boot-corner-tl::before {
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 30px;
+}
+
+.boot-corner-tl::after {
+    top: 0;
+    left: 0;
+    width: 30px;
+    height: 1px;
+}
+
+.boot-corner-tr {
+    top: 24px;
+    right: 24px;
+}
+
+.boot-corner-tr::before {
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 30px;
+}
+
+.boot-corner-tr::after {
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 1px;
+}
+
+.boot-corner-bl {
+    bottom: 24px;
+    left: 24px;
+}
+
+.boot-corner-bl::before {
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    height: 30px;
+}
+
+.boot-corner-bl::after {
+    bottom: 0;
+    left: 0;
+    width: 30px;
+    height: 1px;
+}
+
+.boot-corner-br {
+    bottom: 24px;
+    right: 24px;
+}
+
+.boot-corner-br::before {
+    bottom: 0;
+    right: 0;
+    width: 1px;
+    height: 30px;
+}
+
+.boot-corner-br::after {
+    bottom: 0;
+    right: 0;
+    width: 30px;
+    height: 1px;
+}
+
+/* ═══════════════════════════════════════════
+   Keyframes
+   ═══════════════════════════════════════════ */
+
+@keyframes ring-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ring-spin-r {
+    from {
+        transform: rotate(360deg);
+    }
+
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes particle-fade {
+
+    0%,
+    100% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    50% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+}
+
+@keyframes scanline-move {
+    0% {
+        top: -2px;
+    }
+
+    100% {
+        top: 100%;
+    }
+}
+
+@keyframes noise-drift {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    33% {
+        transform: translate(-2px, 1px);
+    }
+
+    66% {
+        transform: translate(1px, -1px);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes glitch-top {
+    0% {
+        clip-path: inset(20% 0 60% 0);
+        transform: translate(-3px, -1px);
+    }
+
+    50% {
+        clip-path: inset(50% 0 20% 0);
+        transform: translate(2px, 1px);
+    }
+
+    100% {
+        clip-path: inset(30% 0 50% 0);
+        transform: translate(-1px, 0);
+    }
+}
+
+@keyframes glitch-bottom {
+    0% {
+        clip-path: inset(60% 0 10% 0);
+        transform: translate(3px, 1px);
+    }
+
+    50% {
+        clip-path: inset(10% 0 70% 0);
+        transform: translate(-2px, -1px);
+    }
+
+    100% {
+        clip-path: inset(50% 0 30% 0);
+        transform: translate(1px, 0);
+    }
+}
+
+@keyframes pulse-glow {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+@keyframes blink-dots {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}

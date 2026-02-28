@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
 import LoginPage from './components/auth/LoginPage.jsx';
+import BootSequence from './components/boot/BootSequence.jsx';
 import OrbitalIntro from './components/animation/OrbitalIntro.jsx';
+import HomePage from './components/home/HomePage.jsx';
+import ScanInput from './components/scan/ScanInput.jsx';
 import Dashboard from './components/dashboard/Dashboard.jsx';
 import './App.css';
 
@@ -120,46 +123,145 @@ export const DEMO_SCAN = {
 
 export default function App() {
     const [user, setUser] = useState(null);
-    const [showIntro, setShowIntro] = useState(false);
-    const [showDashboard, setShowDashboard] = useState(false);
+    const [showBoot, setShowBoot] = useState(false);
+    const [activeTab, setActiveTab] = useState('home');
     const [scanData, setScanData] = useState(DEMO_SCAN);
-    const [selectedRegion, setSelectedRegion] = useState('kolhapur');
+
+    // Analysis 3-step flow: 'input' → 'scanning' → 'results'
+    const [analysisStep, setAnalysisStep] = useState('input');
+    const [scanConfig, setScanConfig] = useState(null);
 
     const handleLogin = useCallback((userData) => {
         setUser(userData);
-        setShowIntro(true);
+        setShowBoot(true);
     }, []);
 
-    const handleIntroComplete = useCallback(() => {
-        setShowIntro(false);
-        setShowDashboard(true);
+    const handleBootComplete = useCallback(() => {
+        setShowBoot(false);
+        setActiveTab('home');
     }, []);
 
     const handleLogout = useCallback(() => {
         setUser(null);
-        setShowIntro(false);
-        setShowDashboard(false);
+        setShowBoot(false);
+        setActiveTab('home');
+        setAnalysisStep('input');
     }, []);
+
+    const handleStartAnalysis = useCallback(() => {
+        setActiveTab('analysis');
+        setAnalysisStep('input');
+    }, []);
+
+    const handleLaunchScan = useCallback((config) => {
+        setScanConfig(config);
+        setAnalysisStep('scanning');
+    }, []);
+
+    const handleScanAnimationComplete = useCallback(() => {
+        setAnalysisStep('results');
+    }, []);
+
+    const handleNewScan = useCallback(() => {
+        setAnalysisStep('input');
+        setScanConfig(null);
+    }, []);
+
+    const loggedIn = !!user && !showBoot;
 
     return (
         <div className="app">
             {/* Login */}
             {!user && <LoginPage onLogin={handleLogin} />}
 
-            {/* Orbital Intro */}
-            {user && showIntro && <OrbitalIntro onComplete={handleIntroComplete} />}
+            {/* Boot Sequence */}
+            {user && showBoot && <BootSequence onComplete={handleBootComplete} />}
 
-            {/* Dashboard */}
-            {user && showDashboard && (
-                <Dashboard
-                    user={user}
-                    scanData={scanData}
-                    setScanData={setScanData}
-                    selectedRegion={selectedRegion}
-                    setSelectedRegion={setSelectedRegion}
-                    regionPresets={REGION_PRESETS}
-                    onLogout={handleLogout}
-                />
+            {/* Orbital Intro (scan animation) — fullscreen overlay */}
+            {loggedIn && analysisStep === 'scanning' && (
+                <OrbitalIntro onComplete={handleScanAnimationComplete} />
+            )}
+
+            {/* Main App Shell */}
+            {loggedIn && analysisStep !== 'scanning' && (
+                <>
+                    {/* Global Nav */}
+                    <nav className="app-nav">
+                        <div className="app-nav-left">
+                            <div className="app-nav-logo">
+                                <svg viewBox="0 0 24 24" className="app-nav-svg">
+                                    <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(192,192,192,0.2)" strokeWidth="0.5" />
+                                    <circle cx="12" cy="12" r="2" fill="#fff" />
+                                    <circle cx="12" cy="2" r="1.2" fill="#c0c0c0" />
+                                </svg>
+                            </div>
+                            <span className="app-nav-brand">TERRAVEIL</span>
+                            <span className="app-nav-divider" />
+                            <div className="app-nav-tabs">
+                                <button
+                                    className={`app-tab ${activeTab === 'home' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('home')}
+                                >
+                                    HOME
+                                </button>
+                                <button
+                                    className={`app-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+                                    onClick={handleStartAnalysis}
+                                >
+                                    ANALYSIS
+                                </button>
+                            </div>
+                        </div>
+                        <div className="app-nav-right">
+                            <div className="app-nav-status">
+                                <span className="status-dot-app" />
+                                <span className="status-text-app">ONLINE</span>
+                            </div>
+                            <div className="app-nav-user" onClick={() => {
+                                const el = document.querySelector('.app-profile-dropdown');
+                                if (el) el.classList.toggle('visible');
+                            }}>
+                                <span className="app-user-avatar">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
+                                <div className="app-profile-dropdown glass-card-solid">
+                                    <div className="apd-header">
+                                        <span className="apd-avatar">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
+                                        <div className="apd-info">
+                                            <span className="apd-name">{user?.name || 'Operator'}</span>
+                                            <span className="apd-email">{user?.email || 'user@cosmeon.in'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="apd-divider" />
+                                    <button className="apd-logout" onClick={(e) => { e.stopPropagation(); handleLogout(); }}>
+                                        ⏻ LOG OUT
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* Tab Content */}
+                    {activeTab === 'home' && (
+                        <HomePage onStartAnalysis={handleStartAnalysis} />
+                    )}
+
+                    {activeTab === 'analysis' && analysisStep === 'input' && (
+                        <ScanInput
+                            regionPresets={REGION_PRESETS}
+                            onLaunch={handleLaunchScan}
+                        />
+                    )}
+
+                    {activeTab === 'analysis' && analysisStep === 'results' && (
+                        <Dashboard
+                            user={user}
+                            scanData={scanData}
+                            setScanData={setScanData}
+                            scanConfig={scanConfig}
+                            regionPresets={REGION_PRESETS}
+                            onNewScan={handleNewScan}
+                        />
+                    )}
+                </>
             )}
         </div>
     );
