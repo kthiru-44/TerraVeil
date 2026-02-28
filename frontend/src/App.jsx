@@ -179,7 +179,7 @@ export default function App() {
 
             {/* Orbital Intro (scan animation) — fullscreen overlay */}
             {loggedIn && analysisStep === 'scanning' && (
-                <OrbitalIntro onComplete={handleScanAnimationComplete} />
+                <OrbitalIntro onComplete={handleScanAnimationComplete} scanConfig={scanConfig} />
             )}
 
             {/* Main App Shell */}
