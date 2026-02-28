@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react';
 import LoginPage from './components/auth/LoginPage.jsx';
 import BootSequence from './components/boot/BootSequence.jsx';
+import OrbitalIntro from './components/animation/OrbitalIntro.jsx';
 import HomePage from './components/home/HomePage.jsx';
+import ScanInput from './components/scan/ScanInput.jsx';
 import Dashboard from './components/dashboard/Dashboard.jsx';
 import './App.css';
 
@@ -124,7 +126,10 @@ export default function App() {
     const [showBoot, setShowBoot] = useState(false);
     const [activeTab, setActiveTab] = useState('home');
     const [scanData, setScanData] = useState(DEMO_SCAN);
-    const [selectedRegion, setSelectedRegion] = useState('kolhapur');
+
+    // Analysis 3-step flow: 'input' → 'scanning' → 'results'
+    const [analysisStep, setAnalysisStep] = useState('input');
+    const [scanConfig, setScanConfig] = useState(null);
 
     const handleLogin = useCallback((userData) => {
         setUser(userData);
@@ -140,6 +145,26 @@ export default function App() {
         setUser(null);
         setShowBoot(false);
         setActiveTab('home');
+        setAnalysisStep('input');
+    }, []);
+
+    const handleStartAnalysis = useCallback(() => {
+        setActiveTab('analysis');
+        setAnalysisStep('input');
+    }, []);
+
+    const handleLaunchScan = useCallback((config) => {
+        setScanConfig(config);
+        setAnalysisStep('scanning');
+    }, []);
+
+    const handleScanAnimationComplete = useCallback(() => {
+        setAnalysisStep('results');
+    }, []);
+
+    const handleNewScan = useCallback(() => {
+        setAnalysisStep('input');
+        setScanConfig(null);
     }, []);
 
     const loggedIn = !!user && !showBoot;
@@ -152,8 +177,13 @@ export default function App() {
             {/* Boot Sequence */}
             {user && showBoot && <BootSequence onComplete={handleBootComplete} />}
 
+            {/* Orbital Intro (scan animation) — fullscreen overlay */}
+            {loggedIn && analysisStep === 'scanning' && (
+                <OrbitalIntro onComplete={handleScanAnimationComplete} />
+            )}
+
             {/* Main App Shell */}
-            {loggedIn && (
+            {loggedIn && analysisStep !== 'scanning' && (
                 <>
                     {/* Global Nav */}
                     <nav className="app-nav">
@@ -176,7 +206,7 @@ export default function App() {
                                 </button>
                                 <button
                                     className={`app-tab ${activeTab === 'analysis' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('analysis')}
+                                    onClick={handleStartAnalysis}
                                 >
                                     ANALYSIS
                                 </button>
@@ -211,17 +241,24 @@ export default function App() {
 
                     {/* Tab Content */}
                     {activeTab === 'home' && (
-                        <HomePage onStartAnalysis={() => setActiveTab('analysis')} />
+                        <HomePage onStartAnalysis={handleStartAnalysis} />
                     )}
 
-                    {activeTab === 'analysis' && (
+                    {activeTab === 'analysis' && analysisStep === 'input' && (
+                        <ScanInput
+                            regionPresets={REGION_PRESETS}
+                            onLaunch={handleLaunchScan}
+                        />
+                    )}
+
+                    {activeTab === 'analysis' && analysisStep === 'results' && (
                         <Dashboard
                             user={user}
                             scanData={scanData}
                             setScanData={setScanData}
-                            selectedRegion={selectedRegion}
-                            setSelectedRegion={setSelectedRegion}
+                            scanConfig={scanConfig}
                             regionPresets={REGION_PRESETS}
+                            onNewScan={handleNewScan}
                         />
                     )}
                 </>

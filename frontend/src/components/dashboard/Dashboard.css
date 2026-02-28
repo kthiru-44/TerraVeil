@@ -9,6 +9,57 @@
     background: #000;
 }
 
+/* ── Scan Summary ── */
+.scan-summary {
+    padding: var(--space-4) !important;
+}
+
+.ss-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+}
+
+.ss-new-scan {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--color-text-dim);
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    transition: all var(--duration) var(--ease-out);
+}
+
+.ss-new-scan:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.ss-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-1) 0;
+}
+
+.ss-tag {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+    min-width: 56px;
+}
+
+.ss-val {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    text-transform: capitalize;
+}
+
 /* ── Body ── */
 .dashboard-body {
     display: flex;
