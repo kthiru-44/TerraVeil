@@ -9,13 +9,12 @@ from datetime import datetime, timezone
 from app.db import queries as db
 from app.pipeline.satellite_ingestion import fetch_sentinel2, fetch_sentinel1
 from app.pipeline.ndwi import compute_ndwi, detect_flood, compute_flood_probability
-from app.pipeline.nddi import compute_ndvi, compute_nddi, classify_drought
 from app.pipeline.sar import compute_sar_flood_mask, fuse_masks, should_use_sar_primary
 from app.pipeline.ml_detector import predict_flood_mask, ensemble_with_physics
-from app.pipeline.flood_geojson import mask_to_geojson, generate_before_geojson, generate_forecast_geojson, generate_drought_geojson
+from app.pipeline.flood_geojson import mask_to_geojson, generate_before_geojson, generate_forecast_geojson
 from app.pipeline.change_detection import detect_change
 from app.pipeline.infrastructure import fetch_infrastructure, intersect_with_flood, count_at_risk
-from app.pipeline.forecast import fetch_openmeteo_forecast, compute_ndwi_trend, compute_forecast_score, compute_drought_trajectory
+from app.pipeline.forecast import fetch_openmeteo_forecast, compute_ndwi_trend, compute_forecast_score
 from app.pipeline.risk_classifier import classify_risk, estimate_population
 from app.orbital.node import OrbitalNode
 from app.orbital.consensus import run_consensus
@@ -73,16 +72,11 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
         flood_mask, flood_area_km2, ndwi_mean = detect_flood(ndwi_before, ndwi_after, pixel_area_km2=pixel_area_km2)
 
         # NDDI for drought
-        ndvi_after = compute_ndvi(s2_data["event"]["nir"], s2_data["event"]["green"])
-        nddi = compute_nddi(ndvi_after, ndwi_after)
-        drought_info = classify_drought(nddi)
 
         await db.complete_log_step(lid, output_summary={
             "ndwi_mean": round(ndwi_mean, 4),
             "flooded_px": int(np.sum(flood_mask)),
             "flood_area_km2": round(flood_area_km2, 2),
-            "nddi_mean": round(drought_info["nddi_mean"], 4),
-            "drought_severity": drought_info["severity"],
         })
 
         # ── Step 3: SAR ANALYSIS ────────────────────────────────
@@ -272,11 +266,6 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
         ndwi_trend_slope = compute_ndwi_trend([float(np.mean(ndwi_before)), float(np.mean(ndwi_after))])
         forecast_score, forecast_rec = compute_forecast_score(ndwi_trend_slope, weather["total_rainfall_mm"])
 
-        drought_traj = compute_drought_trajectory(
-            [drought_info["nddi_mean"] * 0.8, drought_info["nddi_mean"]],
-            temp_anomaly=weather.get("avg_temp_c", 25) - 25,
-        )
-
         # Update risk with forecast
         risk_result_final = classify_risk(
             flood_area_km2=final_flood_area,
@@ -292,7 +281,6 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
             "recommendation": forecast_rec,
             "rainfall_72h_mm": round(weather["total_rainfall_mm"], 1),
             "ndwi_trend_slope": round(ndwi_trend_slope, 6),
-            "drought_trajectory": drought_traj["trajectory"],
         })
 
         # ── Step 10: REPORT GENERATION ─────────────────────────
@@ -304,14 +292,11 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
             flood_geo = mask_to_geojson(combined_mask, ndwi_after, bbox, ndwi_before=ndwi_before)
             before_geo = generate_before_geojson(ndwi_before, bbox)
             forecast_geo = generate_forecast_geojson(combined_mask, ndwi_after, bbox, forecast_score)
-            nddi_arr = compute_nddi(ndvi_after, ndwi_after)
-            drought_geo = generate_drought_geojson(nddi_arr, bbox)
         except Exception as geo_err:
             print(f"[PIPELINE] GeoJSON generation failed: {geo_err}")
             flood_geo = {"type": "FeatureCollection", "features": []}
             before_geo = flood_geo
             forecast_geo = flood_geo
-            drought_geo = flood_geo
 
         # Update scan record with all results
         await db.update_scan_results(
@@ -328,15 +313,11 @@ async def run_pipeline(scan_id: str, region: str, bbox: dict, t0: str, t1: str, 
             roads_km_affected=round(risk_counts["roads_km_affected"], 1),
             forecast_score=forecast_score,
             forecast_rec=forecast_rec,
-            drought_nddi=round(drought_info["nddi_mean"], 4),
-            drought_severity=drought_info["severity"],
-            drought_area_km2=round(drought_info["drought_area_km2"], 2),
             processing_ms=processing_ms,
             infrastructure_json=json.dumps(infra_serializable),
             flood_geojson_json=json.dumps(flood_geo),
             before_geojson_json=json.dumps(before_geo),
             forecast_geojson_json=json.dumps(forecast_geo),
-            drought_geojson_json=json.dumps(drought_geo),
             status="completed",
         )
 

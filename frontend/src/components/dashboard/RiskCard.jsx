@@ -36,7 +36,7 @@ export default function RiskCard({ data, viewMode }) {
         <div className="risk-card glass-card">
             <div className="risk-header">
                 <h3 className="panel-title">
-                    <span className="section-icon">⚡</span>
+                    <span className="section-icon"></span>
                     Risk Assessment
                 </h3>
                 <span
@@ -96,7 +96,7 @@ export default function RiskCard({ data, viewMode }) {
                             animate={{ opacity: 1, height: 'auto' }}
                             transition={{ duration: 0.3 }}
                         >
-                            <span className="rec-icon">📈</span>
+                            <span className="rec-icon"></span>
                             <p className="rec-text">{data.forecast_rec}</p>
                         </motion.div>
                     )}

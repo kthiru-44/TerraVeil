@@ -146,7 +146,7 @@ export default function AboutPage({ onBack }) {
 
                 {/* Pipeline */}
                 <motion.section className="about-section" custom={2} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="section-heading"><span className="sh-icon">🔄</span> Processing Pipeline</h2>
+                    <h2 className="section-heading">Processing Pipeline</h2>
                     <div className="pipeline-grid">
                         {PIPELINE_STEPS.map((s, i) => (
                             <motion.div key={s.step} className="pipeline-card glass-card" custom={2 + i * 0.5} variants={fadeUp} initial="hidden" animate="visible">
@@ -162,7 +162,7 @@ export default function AboutPage({ onBack }) {
 
                 {/* Tech Stack */}
                 <motion.section className="about-section" custom={3} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="section-heading"><span className="sh-icon">⚙</span> Technical Architecture</h2>
+                    <h2 className="section-heading">Technical Architecture</h2>
                     <div className="tech-grid-page">
                         {TECH_STACK.map((t) => (
                             <div key={t.label} className="tech-tile glass-card">
@@ -176,7 +176,7 @@ export default function AboutPage({ onBack }) {
 
                 {/* Metrics */}
                 <motion.section className="about-section" custom={4} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="section-heading"><span className="sh-icon">📊</span> Performance Metrics</h2>
+                    <h2 className="section-heading">Performance Metrics</h2>
                     <div className="metrics-grid-page">
                         {METRICS.map((m) => (
                             <div key={m.label} className="metric-tile glass-card">
@@ -190,7 +190,7 @@ export default function AboutPage({ onBack }) {
 
                 {/* Benefits */}
                 <motion.section className="about-section" custom={5} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="section-heading"><span className="sh-icon">✨</span> Impact &amp; Benefits</h2>
+                    <h2 className="section-heading">Impact &amp; Benefits</h2>
                     <div className="benefits-grid-page">
                         {BENEFITS.map((b) => (
                             <div key={b.title} className="benefit-tile glass-card">
@@ -204,7 +204,7 @@ export default function AboutPage({ onBack }) {
 
                 {/* Access Tiers */}
                 <motion.section className="about-section" custom={6} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="section-heading"><span className="sh-icon">🔐</span> Access Tiers</h2>
+                    <h2 className="section-heading">Access Tiers</h2>
                     <div className="access-grid-page">
                         {ACCESS_TIERS.map((a) => (
                             <div key={a.tier} className="access-tile glass-card">
@@ -218,7 +218,7 @@ export default function AboutPage({ onBack }) {
 
                 {/* Cost */}
                 <motion.section className="about-section" custom={7} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="section-heading"><span className="sh-icon">💎</span> Cost Comparison</h2>
+                    <h2 className="section-heading">Cost Comparison</h2>
                     <div className="cost-section glass-card">
                         <div className="cost-side cost-old-side">
                             <span className="cost-side-tag">TRADITIONAL APPROACH</span>

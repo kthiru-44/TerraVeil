@@ -89,7 +89,7 @@ export default function ScanInput({ regionPresets, onLaunch }) {
                     {/* Region Selection */}
                     <div className="si-section">
                         <label className="si-label">
-                            <span className="si-label-icon">📍</span> TARGET REGION
+                            <span className="si-label-icon"></span> TARGET REGION
                         </label>
                         <div className="si-region-grid">
                             {Object.entries(regionPresets).map(([key, val]) => (
@@ -132,7 +132,7 @@ export default function ScanInput({ regionPresets, onLaunch }) {
                     {/* Date Range */}
                     <div className="si-section">
                         <label className="si-label">
-                            <span className="si-label-icon">📅</span> ANALYSIS DATE RANGE
+                            <span className="si-label-icon"></span> ANALYSIS DATE RANGE
                         </label>
                         <div className="si-dates">
                             <div className="si-date-group">
@@ -169,7 +169,7 @@ export default function ScanInput({ regionPresets, onLaunch }) {
 
                     {/* Launch */}
                     <button className="si-launch" onClick={handleLaunch}>
-                        <span className="si-launch-icon">🛰</span>
+                        <span className="si-launch-icon"></span>
                         LAUNCH SATELLITE SCAN
                     </button>
                 </motion.div>

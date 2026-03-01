@@ -122,7 +122,7 @@ export default function OrbitalIntro({ onComplete, scanConfig }) {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <span className="logo-icon">🛰</span>
+                            <span className="logo-icon"></span>
                             <span className="logo-text">TERRAVEIL</span>
                             <span className="logo-sub">ORBITAL EDGE INTELLIGENCE</span>
                         </motion.div>
@@ -206,7 +206,7 @@ export default function OrbitalIntro({ onComplete, scanConfig }) {
                                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.3 }}
                                 >
-                                    <span className="alert-icon">⚡</span>
+                                    <span className="alert-icon"></span>
                                     <span className="alert-text">ANOMALY DETECTED</span>
                                     <span className="alert-sub">NDWI threshold exceeded · Region: {regionLabel}</span>
                                 </motion.div>
@@ -235,7 +235,7 @@ export default function OrbitalIntro({ onComplete, scanConfig }) {
                                             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                                             transition={{ duration: 0.4 }}
                                         >
-                                            <span>📡 INTELLIGENCE TRANSMITTED</span>
+                                            <span>INTELLIGENCE TRANSMITTED</span>
                                             <span className="transmit-sub">3/3 nodes · Consensus achieved · {regionLabel}</span>
                                         </motion.div>
                                     )}

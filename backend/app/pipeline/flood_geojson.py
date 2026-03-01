@@ -162,25 +162,6 @@ def generate_forecast_geojson(flood_mask: np.ndarray, ndwi_after: np.ndarray,
         if not flood_mask[0, 0]:  # just mark all as forecast
             f["properties"]["intensity"] *= 0.8
 
-    return geojson
-
-
-def generate_drought_geojson(nddi_values: np.ndarray, bbox: dict,
-                              nddi_threshold: float = 0.1) -> dict:
-    """Generate drought zone GeoJSON from NDDI values."""
-    drought_mask = nddi_values > nddi_threshold
-    if not np.any(drought_mask):
-        return {"type": "FeatureCollection", "features": []}
-
-    geojson = mask_to_geojson(drought_mask, nddi_values, bbox, max_features=150)
-
-    # Reclassify for drought
-    for f in geojson["features"]:
-        f["properties"]["type"] = "drought"
-        nddi = f["properties"].get("ndwi", 0)
-        if nddi > 0.4:
-            f["properties"]["zone"] = "Severe"
-        elif nddi > 0.2:
             f["properties"]["zone"] = "Moderate"
         else:
             f["properties"]["zone"] = "Watch"

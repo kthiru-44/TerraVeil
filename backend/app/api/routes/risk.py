@@ -118,11 +118,6 @@ def _format_scan(scan: dict) -> dict:
             "score": scan["forecast_score"],
             "recommendation": scan["forecast_rec"],
         },
-        "drought": {
-            "nddi_mean": scan["drought_nddi"],
-            "severity": scan["drought_severity"],
-            "area_km2": scan["drought_area_km2"],
-        },
         "processing_ms": scan["processing_ms"],
         "status": scan["status"],
         "created_at": scan["created_at"],
@@ -137,6 +132,5 @@ def _format_scan(scan: dict) -> dict:
         "infrastructure": infra,
         "flood_geojson": _parse_geo("flood_geojson_json"),
         "before_geojson": _parse_geo("before_geojson_json"),
-        "forecast_geojson": _parse_geo("forecast_geojson_json"),
-        "drought_geojson": _parse_geo("drought_geojson_json"),
+        "forecast_geojson": _parse_geo("forecast_geojson_json")
     }

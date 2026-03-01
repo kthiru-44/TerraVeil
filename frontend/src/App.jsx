@@ -60,6 +60,13 @@ export const REGION_PRESETS = {
         date_start: '2022-08-20',
         date_end: '2022-09-01',
     },
+    odisha: {
+        label: 'Odisha (5 Districts)',
+        bbox: [85.55, 19.75, 86.45, 20.55],
+        center: [20.15, 86.0],
+        date_start: '2022-08-15',
+        date_end: '2022-08-30',
+    },
     custom: {
         label: 'Custom Location',
         bbox: [0, 0, 0, 0],
@@ -153,6 +160,7 @@ export const DEMO_SCAN = {
 
 export default function App() {
     const [user, setUser] = useState(null);
+    const [showLogin, setShowLogin] = useState(false);
     const [showBoot, setShowBoot] = useState(false);
     const [activeTab, setActiveTab] = useState('home');
     const [scanData, setScanData] = useState(DEMO_SCAN);
@@ -182,25 +190,32 @@ export default function App() {
 
     const handleLogin = useCallback((userData) => {
         setUser(userData);
+        setShowLogin(false);
         setShowBoot(true);
     }, []);
 
     const handleBootComplete = useCallback(() => {
         setShowBoot(false);
-        setActiveTab('home');
+        setActiveTab('analysis');
+        setAnalysisStep('input');
     }, []);
 
     const handleLogout = useCallback(() => {
         setUser(null);
+        setShowLogin(false);
         setShowBoot(false);
         setActiveTab('home');
         setAnalysisStep('input');
     }, []);
 
     const handleStartAnalysis = useCallback(() => {
-        setActiveTab('analysis');
-        setAnalysisStep('input');
-    }, []);
+        if (user) {
+            setActiveTab('analysis');
+            setAnalysisStep('input');
+        } else {
+            setShowLogin(true);
+        }
+    }, [user]);
 
     const handleLaunchScan = useCallback((config) => {
         setScanConfig(config);
@@ -253,7 +268,7 @@ export default function App() {
     return (
         <div className="app">
             {/* Login */}
-            {!user && <LoginPage onLogin={handleLogin} />}
+            {showLogin && <LoginPage onLogin={handleLogin} />}
 
             {/* Boot Sequence */}
             {user && showBoot && <BootSequence onComplete={handleBootComplete} />}
@@ -264,19 +279,29 @@ export default function App() {
             )}
 
             {/* Main App Shell */}
-            {loggedIn && analysisStep !== 'scanning' && (
+            {!showLogin && !showBoot && analysisStep !== 'scanning' && (
                 <>
                     {/* Global Nav */}
                     <nav className="app-nav">
                         <div className="app-nav-left">
-                            <div className="app-nav-logo">
-                                <svg viewBox="0 0 24 24" className="app-nav-svg">
-                                    <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(192,192,192,0.2)" strokeWidth="0.5" />
-                                    <circle cx="12" cy="12" r="2" fill="#fff" />
-                                    <circle cx="12" cy="2" r="1.2" fill="#c0c0c0" />
-                                </svg>
+                            <div
+                                className="app-nav-brand-group"
+                                onClick={() => {
+                                    setShowLogin(false);
+                                    setActiveTab('home');
+                                    setAnalysisStep('input');
+                                }}
+                                style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                            >
+                                <div className="app-nav-logo">
+                                    <svg viewBox="0 0 24 24" className="app-nav-svg">
+                                        <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(192,192,192,0.2)" strokeWidth="0.5" />
+                                        <circle cx="12" cy="12" r="2" fill="#fff" />
+                                        <circle cx="12" cy="2" r="1.2" fill="#c0c0c0" />
+                                    </svg>
+                                </div>
+                                <span className="app-nav-brand">TERRAVEIL</span>
                             </div>
-                            <span className="app-nav-brand">TERRAVEIL</span>
                             <span className="app-nav-divider" />
                             <div className="app-nav-tabs">
                                 <button
@@ -298,25 +323,31 @@ export default function App() {
                                 <span className="status-dot-app" />
                                 <span className="status-text-app">ONLINE</span>
                             </div>
-                            <div className="app-nav-user" onClick={() => {
-                                const el = document.querySelector('.app-profile-dropdown');
-                                if (el) el.classList.toggle('visible');
-                            }}>
-                                <span className="app-user-avatar">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
-                                <div className="app-profile-dropdown glass-card-solid">
-                                    <div className="apd-header">
-                                        <span className="apd-avatar">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
-                                        <div className="apd-info">
-                                            <span className="apd-name">{user?.name || 'Operator'}</span>
-                                            <span className="apd-email">{user?.email || 'user@cosmeon.in'}</span>
+                            {user ? (
+                                <div className="app-nav-user" onClick={() => {
+                                    const el = document.querySelector('.app-profile-dropdown');
+                                    if (el) el.classList.toggle('visible');
+                                }}>
+                                    <span className="app-user-avatar">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
+                                    <div className="app-profile-dropdown glass-card-solid">
+                                        <div className="apd-header">
+                                            <span className="apd-avatar">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
+                                            <div className="apd-info">
+                                                <span className="apd-name">{user?.name || 'Operator'}</span>
+                                                <span className="apd-email">{user?.email || 'user@cosmeon.in'}</span>
+                                            </div>
                                         </div>
+                                        <div className="apd-divider" />
+                                        <button className="apd-logout" onClick={(e) => { e.stopPropagation(); handleLogout(); }}>
+                                            ⏻ LOG OUT
+                                        </button>
                                     </div>
-                                    <div className="apd-divider" />
-                                    <button className="apd-logout" onClick={(e) => { e.stopPropagation(); handleLogout(); }}>
-                                        ⏻ LOG OUT
-                                    </button>
                                 </div>
-                            </div>
+                            ) : (
+                                <button className="app-tab" style={{ marginLeft: '16px' }} onClick={() => setShowLogin(true)}>
+                                    LOGIN
+                                </button>
+                            )}
                         </div>
                     </nav>
 

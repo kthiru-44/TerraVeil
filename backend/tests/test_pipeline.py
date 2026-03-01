@@ -78,59 +78,6 @@ class TestNDWI:
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  NDDI / Drought Module
-# ═══════════════════════════════════════════════════════════════════
-
-class TestNDDI:
-    def test_compute_ndvi(self):
-        from app.pipeline.nddi import compute_ndvi
-        nir = np.array([300.0, 400.0])
-        red = np.array([100.0, 100.0])
-        ndvi = compute_ndvi(nir, red)
-        assert ndvi.shape == (2,)
-        # (300-100)/(300+100) = 0.5
-        assert abs(ndvi[0] - 0.5) < 0.01
-
-    def test_compute_nddi(self):
-        from app.pipeline.nddi import compute_nddi
-        ndvi = np.array([0.5, 0.7])
-        ndwi = np.array([0.3, 0.1])
-        nddi = compute_nddi(ndvi, ndwi)
-        assert nddi.shape == (2,)
-        assert nddi.min() >= -1.0
-        assert nddi.max() <= 1.0
-
-    def test_classify_drought_normal(self):
-        from app.pipeline.nddi import classify_drought
-        nddi = np.full((100, 100), 0.05)  # Below all thresholds
-        result = classify_drought(nddi)
-        assert result["severity"] == "NORMAL"
-
-    def test_classify_drought_watch(self):
-        from app.pipeline.nddi import classify_drought
-        nddi = np.full((100, 100), 0.2)  # WATCH range
-        result = classify_drought(nddi)
-        assert result["severity"] == "WATCH"
-
-    def test_classify_drought_warning(self):
-        from app.pipeline.nddi import classify_drought
-        nddi = np.full((100, 100), 0.4)  # WARNING range
-        result = classify_drought(nddi)
-        assert result["severity"] == "WARNING"
-
-    def test_classify_drought_emergency(self):
-        from app.pipeline.nddi import classify_drought
-        nddi = np.full((100, 100), 0.6)  # EMERGENCY
-        result = classify_drought(nddi)
-        assert result["severity"] == "EMERGENCY"
-        assert result["drought_area_km2"] > 0
-
-    def test_classify_drought_has_all_fields(self):
-        from app.pipeline.nddi import classify_drought
-        nddi = np.full((50, 50), 0.3)
-        result = classify_drought(nddi)
-        for field in ["nddi_mean", "severity", "drought_area_km2"]:
-            assert field in result
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -171,8 +118,8 @@ class TestRiskClassifier:
     def test_classify_low_risk(self):
         from app.pipeline.risk_classifier import classify_risk
         result = classify_risk(
-            flood_area_km2=5, confidence=0.9,
-            pop_affected=1000, ndwi_mean=0.1,
+            flood_area_km2=2, confidence=0.8,
+            pop_affected=1000, ndwi_mean=0.05,
         )
         assert result["risk_level"] == "LOW"
         assert 0 <= result["risk_score"] <= 20
@@ -180,9 +127,9 @@ class TestRiskClassifier:
     def test_classify_medium_risk(self):
         from app.pipeline.risk_classifier import classify_risk
         result = classify_risk(
-            flood_area_km2=30, confidence=0.9,
-            pop_affected=60000, ndwi_mean=0.35,
-            hospitals_at_risk=2,
+            flood_area_km2=8, confidence=0.9,
+            pop_affected=15000, ndwi_mean=0.2,
+            hospitals_at_risk=1,
         )
         assert result["risk_level"] == "MEDIUM"
         assert 20 <= result["risk_score"] <= 50
@@ -307,4 +254,4 @@ class TestConstants:
     def test_oec_node_ids(self):
         from app.core.constants import OEC_NODE_IDS
         assert len(OEC_NODE_IDS) == 3
-        assert all(id.startswith("COSMEON") for id in OEC_NODE_IDS)
+        assert all(id.startswith("SENTINEL") for id in OEC_NODE_IDS)

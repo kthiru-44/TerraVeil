@@ -69,13 +69,6 @@ class ForecastResult(BaseModel):
     ndwi_trend_slope: float = 0.0
 
 
-class DroughtResult(BaseModel):
-    nddi_mean: float = 0.0
-    severity: str = "WATCH"
-    drought_area_km2: float = 0.0
-    trajectory_14d: str = "stable"
-
-
 class InfrastructureItem(BaseModel):
     type: str
     name: str

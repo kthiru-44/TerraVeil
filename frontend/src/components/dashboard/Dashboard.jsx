@@ -10,7 +10,6 @@ import NodeTelemetry from '../nodes/NodeTelemetry.jsx';
 import ConsensusResult from '../nodes/ConsensusResult.jsx';
 import LogPanel from '../logs/LogPanel.jsx';
 import ForecastToggle from '../forecast/ForecastToggle.jsx';
-import DroughtPanel from '../forecast/DroughtPanel.jsx';
 import { generateReport } from '../../services/reportGenerator.js';
 import './Dashboard.css';
 
@@ -109,10 +108,10 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
                                     onClick={handleExport}
                                     disabled={exporting}
                                 >
-                                    {exporting ? '⏳ Exporting...' : '📄 EXPORT PDF'}
+                                    {exporting ? 'Exporting...' : 'EXPORT PDF'}
                                 </button>
                                 <button className="ss-new-scan" onClick={onNewScan}>
-                                    ↻ NEW SCAN
+                                    NEW SCAN
                                 </button>
                             </div>
                         </div>
@@ -136,7 +135,7 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
                     {viewMode === 'forecast' ? (
                         <motion.div className="forecast-info glass-card" variants={itemVariants}>
                             <h3 className="panel-title">
-                                <span className="section-icon">📈</span>
+                                <span className="section-icon"></span>
                                 72-Hour Forecast
                             </h3>
                             <div className="forecast-score-row">
@@ -167,7 +166,7 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
                     ) : viewMode === 'before' ? (
                         <motion.div className="before-info glass-card" variants={itemVariants}>
                             <h3 className="panel-title">
-                                <span className="section-icon">📷</span>
+                                <span className="section-icon"></span>
                                 Baseline State
                             </h3>
                             <p className="before-desc">

@@ -38,10 +38,10 @@ function AnimatedNumber({ value, suffix = '', duration = 1500 }) {
 }
 
 const STATS = [
-    { key: 'flood_area_km2', label: 'Flood Area', icon: '🌊', suffix: ' km²', color: 'var(--color-accent)' },
+    { key: 'flood_area_km2', label: 'Flood Area', icon: '', suffix: ' km²', color: 'var(--color-accent)' },
     { key: 'pop_affected', label: 'Population', icon: '👥', suffix: '', color: 'var(--color-warning)' },
     { key: 'hospitals_at_risk', label: 'Hospitals', icon: '🏥', suffix: '', color: 'var(--color-danger)' },
-    { key: 'roads_km_affected', label: 'Roads', icon: '🛣', suffix: ' km', color: 'var(--risk-high)' },
+    { key: 'roads_km_affected', label: 'Roads', icon: '', suffix: ' km', color: 'var(--risk-high)' },
 ];
 
 export default function StatsBar({ data }) {

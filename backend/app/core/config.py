@@ -78,4 +78,11 @@ DEMO_REGIONS = {
         "t1": "2022-09-01",
         "source": "sentinel-2",
     },
+    "odisha": {
+        "name": "Odisha (5 Districts)",
+        "bbox": {"north": 20.55, "south": 19.75, "east": 86.45, "west": 85.55},
+        "t0": "2022-08-15",
+        "t1": "2022-08-30",
+        "source": "sentinel-2",
+    },
 }

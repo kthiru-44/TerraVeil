@@ -1,16 +1,15 @@
 import './ForecastToggle.css';
 
-const TABS = [
-    { key: 'before', label: 'Before', icon: '📷' },
-    { key: 'now', label: 'Now', icon: '🌊' },
-    { key: 'forecast', label: '72H Forecast', icon: '📈' },
-    { key: 'drought', label: 'Drought Index', icon: '☀️' },
+const MODES = [
+    { key: 'before', label: 'Before', icon: '' },
+    { key: 'now', label: 'Now', icon: '' },
+    { key: 'forecast', label: '72H Forecast', icon: '' }
 ];
 
 export default function ForecastToggle({ viewMode, setViewMode }) {
     return (
         <div className="forecast-toggle">
-            {TABS.map((tab) => (
+            {MODES.map((tab) => (
                 <button
                     key={tab.key}
                     className={`ft-tab ${viewMode === tab.key ? 'active' : ''}`}

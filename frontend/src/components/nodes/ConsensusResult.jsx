@@ -8,7 +8,7 @@ export default function ConsensusResult({ data }) {
     return (
         <div className="consensus-result glass-card">
             <h3 className="panel-title">
-                <span className="section-icon">🔗</span>
+                <span className="section-icon"></span>
                 Orbital Consensus
             </h3>
 

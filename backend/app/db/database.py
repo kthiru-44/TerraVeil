@@ -33,19 +33,17 @@ def init_db():
             pop_affected      INTEGER,
             hospitals_at_risk INTEGER,
             roads_km_affected REAL,
-            forecast_score    REAL,
+            forecast_flood_area_km2 REAL,
             forecast_rec      TEXT,
-            drought_nddi      REAL,
-            drought_severity  TEXT,
-            drought_area_km2  REAL,
+            confidence_low    REAL,
+            confidence_high   REAL,
             status            TEXT DEFAULT 'pending',
             created_at        TEXT NOT NULL,
             processing_ms     INTEGER,
             infrastructure_json TEXT,
             flood_geojson_json TEXT,
             before_geojson_json TEXT,
-            forecast_geojson_json TEXT,
-            drought_geojson_json TEXT
+            forecast_geojson_json TEXT
         )
     """)
 

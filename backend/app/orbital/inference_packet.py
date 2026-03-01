@@ -17,7 +17,6 @@ class InferencePacketData:
     raw_data_mb: float = 0.0
     packet_kb: float = 0.0
     flood_detected: bool = False
-    drought_nddi_mean: float = 0.0
 
     def to_dict(self) -> dict:
         return asdict(self)

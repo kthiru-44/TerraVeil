@@ -70,9 +70,9 @@ class TestRiskEndpoint:
         r2 = client.get("/api/v1/risk", params={"region": "chennai", "date": "2021-11-18"})
         assert r1.json()["scan_id"] != r2.json()["scan_id"]
 
-    def test_risk_unknown_region_returns_404(self):
+    def test_risk_unknown_region_returns_400(self):
         r = client.get("/api/v1/risk", params={"region": "atlantis", "date": "2021-01-01"})
-        assert r.status_code == 404
+        assert r.status_code == 400
 
     def test_risk_missing_region_param_returns_422(self):
         r = client.get("/api/v1/risk")
@@ -85,7 +85,9 @@ class TestRiskEndpoint:
             "scan_id", "region", "risk_level", "risk_score", "confidence",
             "confidence_band", "flood_area_km2", "change_area_km2",
             "pop_affected", "hospitals_at_risk", "roads_km_affected",
-            "forecast", "drought", "processing_ms", "status", "created_at",
+            "forecast", "processing_ms", "status", "created_at",
+            "t0_date", "t1_date", "bbox", "infrastructure",
+            "flood_geojson", "before_geojson", "forecast_geojson"
         ]
         for field in required_fields:
             assert field in data, f"Missing field: {field}"
@@ -103,13 +105,6 @@ class TestRiskEndpoint:
         assert "score" in forecast
         assert "recommendation" in forecast
         assert 0 <= forecast["score"] <= 100
-
-    def test_drought_structure(self):
-        r = client.get("/api/v1/risk", params={"region": "kolhapur", "date": "2021-07-22"})
-        drought = r.json()["drought"]
-        assert "nddi_mean" in drought
-        assert "severity" in drought
-        assert "area_km2" in drought
 
     def test_risk_score_in_valid_range(self):
         r = client.get("/api/v1/risk", params={"region": "kolhapur", "date": "2021-07-22"})

@@ -11,12 +11,11 @@ const fadeUp = {
 };
 
 const FEATURES = [
-    { icon: '🛰', title: 'Satellite Ingestion', desc: 'Real-time Sentinel-2 MSI imagery at 10m resolution via Copernicus Open Access Hub' },
-    { icon: '🌊', title: 'Flood Detection', desc: 'NDWI-based water body classification with automated threshold analysis' },
-    { icon: '🧠', title: 'Edge AI Consensus', desc: '3-node Byzantine fault tolerant processing for verified risk assessments' },
-    { icon: '📡', title: 'GEE Pipeline', desc: 'Google Earth Engine backend for petabyte-scale geospatial computation' },
-    { icon: '🏗', title: 'Infrastructure Mapping', desc: 'Automatic identification of hospitals, roads, and bridges in flood zones' },
-    { icon: '🌾', title: 'Drought Monitoring', desc: 'Soil moisture and vegetation index tracking for agricultural safety' },
+    { icon: '', title: 'Satellite Ingestion', desc: 'Real-time Sentinel-2 MSI imagery at 10m resolution via Copernicus Open Access Hub' },
+    { icon: '', title: 'Flood Detection', desc: 'NDWI-based water body classification with automated threshold analysis' },
+    { icon: '', title: 'Edge AI Consensus', desc: '3-node Byzantine fault tolerant processing for verified risk assessments' },
+    { icon: '', title: 'GEE Pipeline', desc: 'Google Earth Engine backend for petabyte-scale geospatial computation' },
+    { icon: '', title: 'Infrastructure Mapping', desc: 'Automatic identification of hospitals, roads, and bridges in flood zones' }
 ];
 
 const METRICS = [
@@ -67,7 +66,7 @@ export default function HomePage({ onStartAnalysis }) {
                         <span className="home-badge">Open Source</span>
                     </div>
                     <button className="home-cta" onClick={onStartAnalysis}>
-                        <span className="cta-icon">🛰</span> START ANALYSIS
+                        <span className="cta-icon"></span> START ANALYSIS
                     </button>
                 </motion.section>
 
@@ -83,7 +82,7 @@ export default function HomePage({ onStartAnalysis }) {
 
                 {/* Features */}
                 <motion.section className="home-section" custom={2} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="home-section-title"><span>⚙</span> Platform Capabilities</h2>
+                    <h2 className="home-section-title">Platform Capabilities</h2>
                     <div className="home-features-grid">
                         {FEATURES.map((f) => (
                             <div key={f.title} className="home-feature glass-card">
@@ -97,7 +96,7 @@ export default function HomePage({ onStartAnalysis }) {
 
                 {/* Pipeline */}
                 <motion.section className="home-section" custom={3} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="home-section-title"><span>🔄</span> Processing Pipeline</h2>
+                    <h2 className="home-section-title">Processing Pipeline</h2>
                     <div className="home-pipeline">
                         {PIPELINE.map((p, i) => (
                             <div key={p.step} className="hp-step glass-card">
@@ -112,7 +111,7 @@ export default function HomePage({ onStartAnalysis }) {
 
                 {/* Cost */}
                 <motion.section className="home-section" custom={4} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="home-section-title"><span>💎</span> Cost Comparison</h2>
+                    <h2 className="home-section-title">Cost Comparison</h2>
                     <div className="home-cost glass-card">
                         <div className="hc-side">
                             <span className="hc-tag">TRADITIONAL</span>
@@ -130,7 +129,7 @@ export default function HomePage({ onStartAnalysis }) {
 
                 {/* Access */}
                 <motion.section className="home-section" custom={5} variants={fadeUp} initial="hidden" animate="visible">
-                    <h2 className="home-section-title"><span>🔐</span> Who Can Access</h2>
+                    <h2 className="home-section-title">Who Can Access</h2>
                     <div className="home-access">
                         <div className="ha-tier glass-card"><span className="ha-dot" style={{ background: '#4ade80' }} />PUBLIC — Citizens, communities, anyone</div>
                         <div className="ha-tier glass-card"><span className="ha-dot" style={{ background: '#60a5fa' }} />RESEARCH — Universities, NGOs, full API</div>
@@ -152,7 +151,7 @@ export default function HomePage({ onStartAnalysis }) {
                     <span className="hf-sep">·</span>
                     <span>COSMEON · HackX 4.0 · PS-06</span>
                     <span className="hf-sep">·</span>
-                    <span>Built with 🛰 for a safer world</span>
+                    <span>Built with ⚛ for a safer world</span>
                 </div>
             </div>
         </div>
