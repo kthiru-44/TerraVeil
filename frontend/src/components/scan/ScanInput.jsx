@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import './ScanInput.css';
 
@@ -10,7 +10,7 @@ const MONTHS = [
     { value: '09', label: 'September' }, { value: '10', label: 'October' },
     { value: '11', label: 'November' }, { value: '12', label: 'December' },
 ];
-const YEARS = ['2024', '2023', '2022', '2021', '2020', '2019'];
+const YEARS = ['2025', '2024', '2023', '2022', '2021', '2020', '2019'];
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
 
 function parseDate(dateStr) {
@@ -29,6 +29,72 @@ export default function ScanInput({ regionPresets, onLaunch }) {
     const [customLocation, setCustomLocation] = useState('');
     const [customLat, setCustomLat] = useState('');
     const [customLon, setCustomLon] = useState('');
+
+    // Geocoder state
+    const [geoQuery, setGeoQuery] = useState('');
+    const [geoResults, setGeoResults] = useState([]);
+    const [showGeoResults, setShowGeoResults] = useState(false);
+    const [geoLoading, setGeoLoading] = useState(false);
+    const debounceRef = useRef(null);
+    const geoRef = useRef(null);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClick = (e) => {
+            if (geoRef.current && !geoRef.current.contains(e.target)) {
+                setShowGeoResults(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, []);
+
+    // Geocode search using Nominatim (free, worldwide, no API key)
+    const searchLocation = useCallback(async (query) => {
+        if (!query || query.length < 3) {
+            setGeoResults([]);
+            return;
+        }
+        setGeoLoading(true);
+        try {
+            const resp = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=6&addressdetails=1`,
+                { headers: { 'Accept-Language': 'en' } }
+            );
+            const data = await resp.json();
+            setGeoResults(data.map(r => ({
+                name: r.display_name.split(',').slice(0, 3).join(', '),
+                fullName: r.display_name,
+                lat: parseFloat(r.lat),
+                lon: parseFloat(r.lon),
+                bbox: r.boundingbox, // [south, north, west, east]
+                type: r.type,
+                country: r.address?.country || '',
+            })));
+            setShowGeoResults(true);
+        } catch (err) {
+            console.warn('[GEO] Nominatim search failed:', err);
+            setGeoResults([]);
+        } finally {
+            setGeoLoading(false);
+        }
+    }, []);
+
+    const handleGeoInput = (value) => {
+        setGeoQuery(value);
+        setCustomLocation(value);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => searchLocation(value), 400);
+    };
+
+    const handleGeoSelect = (result) => {
+        setCustomLocation(result.name);
+        setGeoQuery(result.name);
+        setCustomLat(result.lat.toFixed(4));
+        setCustomLon(result.lon.toFixed(4));
+        setShowGeoResults(false);
+        setGeoResults([]);
+    };
 
     const region = regionPresets[selectedRegion];
     const defStart = parseDate(region?.date_start);
@@ -109,23 +175,45 @@ export default function ScanInput({ regionPresets, onLaunch }) {
                         </div>
                     </div>
 
-                    {/* Custom Location */}
+                    {/* Custom Location with Geocoder */}
                     {selectedRegion === 'custom' && (
                         <motion.div className="si-section si-custom" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                            <div className="si-field">
-                                <label className="si-label-sm">LOCATION NAME</label>
-                                <input type="text" className="si-input" placeholder="e.g. Mumbai, India" value={customLocation} onChange={(e) => setCustomLocation(e.target.value)} />
+                            <div className="si-field" ref={geoRef} style={{ position: 'relative' }}>
+                                <label className="si-label-sm">🔍 SEARCH LOCATION</label>
+                                <input
+                                    type="text"
+                                    className="si-input"
+                                    placeholder="Search any city, region, or country..."
+                                    value={geoQuery}
+                                    onChange={(e) => handleGeoInput(e.target.value)}
+                                    onFocus={() => geoResults.length > 0 && setShowGeoResults(true)}
+                                    autoComplete="off"
+                                />
+                                {geoLoading && (
+                                    <span className="si-geo-loading">Searching...</span>
+                                )}
+                                {showGeoResults && geoResults.length > 0 && (
+                                    <div className="si-geo-dropdown">
+                                        {geoResults.map((r, i) => (
+                                            <button
+                                                key={i}
+                                                className="si-geo-item"
+                                                onClick={() => handleGeoSelect(r)}
+                                            >
+                                                <span className="si-geo-name">{r.name}</span>
+                                                <span className="si-geo-coords">
+                                                    {r.lat.toFixed(2)}°, {r.lon.toFixed(2)}° · {r.country}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                            <div className="si-row-2">
-                                <div className="si-field">
-                                    <label className="si-label-sm">LATITUDE</label>
-                                    <input type="number" className="si-input" placeholder="19.0760" step="0.0001" value={customLat} onChange={(e) => setCustomLat(e.target.value)} />
+                            {customLat && customLon && (
+                                <div className="si-geo-selected">
+                                    ✓ {customLocation} — {customLat}°N, {customLon}°E
                                 </div>
-                                <div className="si-field">
-                                    <label className="si-label-sm">LONGITUDE</label>
-                                    <input type="number" className="si-input" placeholder="72.8777" step="0.0001" value={customLon} onChange={(e) => setCustomLon(e.target.value)} />
-                                </div>
-                            </div>
+                            )}
                         </motion.div>
                     )}
 

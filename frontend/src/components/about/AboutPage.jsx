@@ -11,23 +11,25 @@ const fadeUp = {
 };
 
 const TECH_STACK = [
-    { icon: '🛰', label: 'Sentinel-2 MSI', desc: '10m multi-spectral imagery via Copernicus Open Access Hub' },
-    { icon: '🌊', label: 'NDWI Analysis', desc: 'Normalized Difference Water Index for precise flood detection' },
-    { icon: '🧠', label: 'Edge AI Consensus', desc: '3-node Byzantine fault tolerant orbital processing' },
-    { icon: '📡', label: 'Google Earth Engine', desc: 'Petabyte-scale geospatial analysis pipeline' },
-    { icon: '🗺', label: 'Leaflet + OpenStreetMap', desc: 'Interactive mapping with dark-tile overlays' },
-    { icon: '⚡', label: 'React + Vite', desc: 'Sub-second HMR, optimized production builds' },
-    { icon: '🔗', label: 'FastAPI Backend', desc: 'Async Python API with auto-generated docs' },
-    { icon: '📊', label: 'GeoJSON Pipeline', desc: 'Vector flood polygons with infrastructure overlay' },
+    { icon: '🛰', label: 'Sentinel-2 + S1 SAR', desc: '10m multi-spectral + all-weather radar imagery via Copernicus' },
+    { icon: '🧠', label: 'U-Net MobileNetV2', desc: 'Deep learning flood detection with 6.6M parameters, ~156ms inference' },
+    { icon: '🌊', label: 'NDWI + SAR Fusion', desc: 'Multi-modal water index + VV-polarized backscatter analysis' },
+    { icon: '📡', label: 'Google Earth Engine', desc: 'Petabyte-scale geospatial analysis with global Sentinel coverage' },
+    { icon: '🤖', label: 'COSMEON Consensus', desc: '4-node Byzantine fault tolerant orbital edge computing protocol' },
+    { icon: '🗺', label: 'Leaflet + GeoJSON', desc: 'Real flood polygons on dark-tile interactive maps with infrastructure' },
+    { icon: '⚡', label: 'React 19 + Vite', desc: 'Premium glassmorphic UI with Framer Motion animations' },
+    { icon: '🔗', label: 'FastAPI + SQLite', desc: 'Async Python backend with intelligent scan caching' },
+    { icon: '🌤', label: 'OpenMeteo Forecast', desc: 'Real-time 72-hour precipitation and temperature forecasting' },
+    { icon: '🏥', label: 'OSMnx Infrastructure', desc: 'Real hospital, school, bridge, road risk assessment from OpenStreetMap' },
 ];
 
 const METRICS = [
     { value: '380,000:1', label: 'DATA COMPRESSION', detail: '2.3 GB raw satellite → 6.2 KB intelligence packet' },
-    { value: '<800ms', label: 'END-TO-END LATENCY', detail: 'Satellite capture to dashboard visualization' },
+    { value: '~156ms', label: 'ML INFERENCE', detail: 'U-Net MobileNetV2 flood detection per tile' },
     { value: '10m', label: 'SPATIAL RESOLUTION', detail: 'Per-pixel ground truth classification' },
-    { value: '72h', label: 'FORECAST WINDOW', detail: 'Predictive flood trajectory modeling' },
-    { value: '0.91', label: 'CONFIDENCE SCORE', detail: 'Multi-node consensus accuracy rating' },
-    { value: '3/3', label: 'NODE CONSENSUS', detail: 'Byzantine fault tolerant agreement' },
+    { value: '72h', label: 'FORECAST WINDOW', detail: 'OpenMeteo precipitation + NDWI trend projection' },
+    { value: '0.97', label: 'CONFIDENCE SCORE', detail: 'Multi-node consensus accuracy rating' },
+    { value: '4/4', label: 'NODE CONSENSUS', detail: 'Byzantine fault tolerant orbital agreement' },
 ];
 
 const BENEFITS = [
@@ -71,12 +73,16 @@ const ACCESS_TIERS = [
 ];
 
 const PIPELINE_STEPS = [
-    { step: '01', title: 'Ingest', desc: 'Sentinel-2 L2A tiles fetched via GEE for target BBOX + date range' },
-    { step: '02', title: 'Compute NDWI', desc: 'Band math (Green − NIR) / (Green + NIR) at 10m resolution' },
-    { step: '03', title: 'Threshold', desc: 'Pixels with NDWI > 0.3 classified as flood-inundated' },
-    { step: '04', title: 'Vectorize', desc: 'Raster flood mask converted to GeoJSON polygons' },
-    { step: '05', title: 'Consensus', desc: '3 orbital edge nodes vote on risk classification (BFT)' },
-    { step: '06', title: 'Deliver', desc: 'Compressed 6.2 KB packet transmitted to dashboard in <800ms' },
+    { step: '01', title: 'Satellite Ingestion', desc: 'Fetch Sentinel-2 optical + Sentinel-1 SAR imagery via Google Earth Engine' },
+    { step: '02', title: 'NDWI Computation', desc: 'Band math (Green − NIR) / (Green + NIR) at 10m resolution for water detection' },
+    { step: '03', title: 'SAR Analysis', desc: 'VV-polarized backscatter thresholding for all-weather flood detection' },
+    { step: '04', title: 'ML Ensemble', desc: 'U-Net MobileNetV2 deep learning flood mask fused with physics-based analysis' },
+    { step: '05', title: 'Change Detection', desc: 'Temporal differencing between baseline and event imagery to isolate new flooding' },
+    { step: '06', title: 'OEC Inference', desc: 'Distributed analysis across 4 simulated LEO orbital edge nodes' },
+    { step: '07', title: 'Bayesian Consensus', desc: 'Weighted multi-node agreement with configurable trust weights' },
+    { step: '08', title: 'Infrastructure Overlay', desc: 'Cross-reference flood zones with hospitals, roads, bridges from OpenStreetMap' },
+    { step: '09', title: 'Risk Classification', desc: 'Composite risk score (0–100) from flood area, NDWI, population, infrastructure' },
+    { step: '10', title: 'Forecast & Report', desc: '72H weather forecast, vulnerability projection, Before/Now/Forecast GeoJSON' },
 ];
 
 export default function AboutPage({ onBack }) {
@@ -88,21 +94,8 @@ export default function AboutPage({ onBack }) {
             <div className="about-bg-orb about-orb-2" />
             <div className="about-bg-orb about-orb-3" />
 
-            {/* Navbar */}
-            <nav className="about-nav">
-                <button className="about-back" onClick={onBack}>
-                    ← Back to Dashboard
-                </button>
-                <div className="about-nav-brand">
-                    <svg viewBox="0 0 24 24" className="about-nav-svg">
-                        <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(192,192,192,0.2)" strokeWidth="0.5" />
-                        <circle cx="12" cy="12" r="2" fill="#fff" />
-                        <circle cx="12" cy="2" r="1.2" fill="#c0c0c0" />
-                    </svg>
-                    <span className="about-nav-title">TERRAVEIL</span>
-                </div>
-                <div style={{ width: 160 }} />
-            </nav>
+
+
 
             {/* Content */}
             <div className="about-content">
@@ -237,7 +230,7 @@ export default function AboutPage({ onBack }) {
                             <span className="cost-side-tag cost-tag-free">TERRAVEIL</span>
                             <span className="cost-side-price cost-price-free">$0</span>
                             <ul className="cost-side-list">
-                                <li>Free Sentinel-2 open data</li>
+                                <li>Free Sentinel - 1 & 2 open data</li>
                                 <li>Open-source full stack</li>
                                 <li>Automated AI analysis</li>
                                 <li>&lt;10 minutes end-to-end</li>

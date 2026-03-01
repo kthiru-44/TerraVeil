@@ -58,6 +58,15 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
     const region = regionPresets?.[regionKey];
     const mapCenter = scanConfig?.center || region?.center || [16.7, 74.2];
 
+    // Compute map bounds from bbox for auto-fit
+    const mapBounds = useMemo(() => {
+        const bbox = scanData?.bbox;
+        if (bbox && bbox.north && bbox.south && bbox.east && bbox.west) {
+            return [[bbox.south, bbox.west], [bbox.north, bbox.east]];
+        }
+        return null;
+    }, [scanData?.bbox]);
+
     // Pick the right GeoJSON overlay for the active view mode
     const activeGeoJson = useMemo(() => {
         switch (viewMode) {
@@ -86,7 +95,7 @@ export default function Dashboard({ user, scanData, setScanData, scanConfig, reg
                         <ForecastToggle viewMode={viewMode} setViewMode={setViewMode} />
                     </div>
                     <div className="map-container" ref={mapRef}>
-                        <MapPanel center={mapCenter} zoom={13}>
+                        <MapPanel center={mapCenter} zoom={11} bounds={mapBounds} geojson={activeGeoJson}>
                             <FloodOverlay geojson={activeGeoJson} viewMode={viewMode} scanId={scanData.scan_id} />
                             {viewMode !== 'before' && (
                                 <InfrastructureMarkers infrastructure={scanData.infrastructure} />

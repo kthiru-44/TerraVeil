@@ -1,11 +1,13 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import LoginPage from './components/auth/LoginPage.jsx';
 import BootSequence from './components/boot/BootSequence.jsx';
 import OrbitalIntro from './components/animation/OrbitalIntro.jsx';
+import ProcessingScreen from './components/animation/ProcessingScreen.jsx';
 import HomePage from './components/home/HomePage.jsx';
 import ScanInput from './components/scan/ScanInput.jsx';
 import Dashboard from './components/dashboard/Dashboard.jsx';
-import { getRisk } from './services/api.js';
+import AboutPage from './components/about/AboutPage.jsx';
+import { getRisk, submitScan, getScanResult } from './services/api.js';
 import { normalizeRiskResponse, normalizeCustomScanResponse } from './services/normalize.js';
 import './App.css';
 
@@ -165,18 +167,21 @@ export default function App() {
     const [activeTab, setActiveTab] = useState('home');
     const [scanData, setScanData] = useState(DEMO_SCAN);
 
-    // Analysis 3-step flow: 'input' → 'scanning' → 'results'
+    // Analysis 4-step flow: 'input' → 'scanning' → 'processing' → 'results'
     const [analysisStep, setAnalysisStep] = useState('input');
     const [scanConfig, setScanConfig] = useState(null);
+    const [activeScanId, setActiveScanId] = useState(null);
 
     // Synchronize animation completion + API data arrival
     const pendingApiData = useRef(null);
     const animDone = useRef(false);
     const dataReady = useRef(false);
+    const pollRef = useRef(null);
 
-    // Transition to results only when BOTH animation AND data are ready
+    // Transition logic: when animation ends, show processing screen if data not ready
     const tryTransition = useCallback(() => {
         if (animDone.current && dataReady.current) {
+            // Both done — go straight to results
             if (pendingApiData.current) {
                 setScanData(pendingApiData.current);
                 console.log('[APP] Using live backend data');
@@ -185,6 +190,9 @@ export default function App() {
                 console.log('[APP] Using fallback demo data');
             }
             setAnalysisStep('results');
+        } else if (animDone.current && !dataReady.current) {
+            // Animation done but data still loading — show processing screen
+            setAnalysisStep('processing');
         }
     }, []);
 
@@ -223,31 +231,87 @@ export default function App() {
         pendingApiData.current = null;
         animDone.current = false;
         dataReady.current = false;
+        setActiveScanId(null);
 
-        // Fire backend API call in parallel with orbital animation
         const regionKey = config.selectedRegion || config.region;
-        const dateParam = config.date_end;
-        // Convert bbox array [west, south, east, north] to object
         const bboxObj = config.bbox && config.bbox.length === 4
             ? { west: config.bbox[0], south: config.bbox[1], east: config.bbox[2], north: config.bbox[3] }
             : null;
 
-        getRisk(regionKey, dateParam, config.date_start, config.date_end, bboxObj)
-            .then((apiData) => {
-                const normalized = (regionKey === 'custom')
-                    ? normalizeCustomScanResponse(apiData)
-                    : normalizeRiskResponse(apiData, regionKey);
-                pendingApiData.current = normalized;
-                console.log('[API] Live data received from backend:', normalized.scan_id);
+        // Use submitScan (async background pipeline) to get scanId immediately for SSE
+        if (bboxObj) {
+            submitScan({
+                region_name: regionKey,
+                bbox: bboxObj,
+                t0_date: config.date_start,
+                t1_date: config.date_end,
+                data_source: 'sentinel-2',
             })
-            .catch((err) => {
-                console.warn('[API] Backend call failed, using demo data:', err.message);
-                pendingApiData.current = null;
-            })
-            .finally(() => {
-                dataReady.current = true;
-                tryTransition();
-            });
+                .then((resp) => {
+                    const scanId = resp.scan_id;
+                    console.log('[API] Scan submitted, scanId:', scanId);
+                    setActiveScanId(scanId);
+
+                    // Poll for completion every 3 seconds
+                    const poll = setInterval(async () => {
+                        try {
+                            const result = await getScanResult(scanId);
+                            if (result.status === 'completed') {
+                                clearInterval(poll);
+                                pollRef.current = null;
+                                const normalized = normalizeRiskResponse(result, regionKey);
+                                pendingApiData.current = normalized;
+                                dataReady.current = true;
+                                setScanData(normalized);
+                                console.log('[APP] Pipeline completed, transitioning to results');
+                                setAnalysisStep('results');
+                            } else if (result.status === 'failed') {
+                                clearInterval(poll);
+                                pollRef.current = null;
+                                dataReady.current = true;
+                                setScanData(DEMO_SCAN);
+                                console.warn('[APP] Pipeline failed, using demo data');
+                                setAnalysisStep('results');
+                            }
+                        } catch (e) {
+                            // Still running, keep polling
+                        }
+                    }, 3000);
+                    pollRef.current = poll;
+                })
+                .catch((err) => {
+                    console.warn('[API] submitScan failed, falling back to getRisk:', err.message);
+                    // Fallback to blocking getRisk
+                    getRisk(regionKey, config.date_end, config.date_start, config.date_end, bboxObj)
+                        .then((apiData) => {
+                            const normalized = normalizeRiskResponse(apiData, regionKey);
+                            pendingApiData.current = normalized;
+                            dataReady.current = true;
+                            setScanData(normalized);
+                            setAnalysisStep('results');
+                        })
+                        .catch(() => {
+                            dataReady.current = true;
+                            setScanData(DEMO_SCAN);
+                            setAnalysisStep('results');
+                        });
+                });
+        } else {
+            // No bbox, fallback to getRisk (preset regions)
+            getRisk(regionKey, config.date_end, config.date_start, config.date_end, bboxObj)
+                .then((apiData) => {
+                    const normalized = normalizeRiskResponse(apiData, regionKey);
+                    pendingApiData.current = normalized;
+                    dataReady.current = true;
+                    setScanData(normalized);
+                    setAnalysisStep('results');
+                })
+                .catch(() => {
+                    dataReady.current = true;
+                    setScanData(DEMO_SCAN);
+                    setAnalysisStep('results');
+                });
+        }
     }, [tryTransition]);
 
     const handleScanAnimationComplete = useCallback(() => {
@@ -258,9 +322,14 @@ export default function App() {
     const handleNewScan = useCallback(() => {
         setAnalysisStep('input');
         setScanConfig(null);
+        setActiveScanId(null);
         pendingApiData.current = null;
         animDone.current = false;
         dataReady.current = false;
+        if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+        }
     }, []);
 
     const loggedIn = !!user && !showBoot;
@@ -278,8 +347,26 @@ export default function App() {
                 <OrbitalIntro onComplete={handleScanAnimationComplete} scanConfig={scanConfig} />
             )}
 
+            {/* Processing Screen — between animation and results */}
+            {loggedIn && analysisStep === 'processing' && (
+                <ProcessingScreen
+                    scanConfig={scanConfig}
+                    scanId={activeScanId}
+                    onDataReady={() => {
+                        if (pendingApiData.current) {
+                            setScanData(pendingApiData.current);
+                            console.log('[APP] Using live backend data (skip)');
+                        } else {
+                            setScanData(DEMO_SCAN);
+                            console.log('[APP] Using fallback demo data (skip)');
+                        }
+                        setAnalysisStep('results');
+                    }}
+                />
+            )}
+
             {/* Main App Shell */}
-            {!showLogin && !showBoot && analysisStep !== 'scanning' && (
+            {!showLogin && !showBoot && analysisStep !== 'scanning' && analysisStep !== 'processing' && (
                 <>
                     {/* Global Nav */}
                     <nav className="app-nav">
@@ -309,6 +396,12 @@ export default function App() {
                                     onClick={() => setActiveTab('home')}
                                 >
                                     HOME
+                                </button>
+                                <button
+                                    className={`app-tab ${activeTab === 'about' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('about')}
+                                >
+                                    ABOUT
                                 </button>
                                 <button
                                     className={`app-tab ${activeTab === 'analysis' ? 'active' : ''}`}
@@ -372,6 +465,10 @@ export default function App() {
                             regionPresets={REGION_PRESETS}
                             onNewScan={handleNewScan}
                         />
+                    )}
+
+                    {activeTab === 'about' && (
+                        <AboutPage onBack={() => setActiveTab('home')} />
                     )}
                 </>
             )}

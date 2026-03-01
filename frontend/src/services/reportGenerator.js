@@ -295,13 +295,22 @@ export async function generateReport(data, mapElement) {
     drawLine(doc, M, y + 2, M + CW, y + 2, COLORS.warning, 0.5);
     y += 7;
 
+    // Group infrastructure items by type from the flat array
+    const infraArray = Array.isArray(data.infrastructure) ? data.infrastructure : [];
+    const infraGrouped = {};
+    infraArray.forEach(item => {
+        const t = item.type || 'other';
+        if (!infraGrouped[t]) infraGrouped[t] = [];
+        infraGrouped[t].push(item);
+    });
+
     // Infrastructure summary cards
     const infraItems = [
-        { icon: '🏥', label: 'Hospitals at Risk', value: data.hospitals_at_risk || 0, color: COLORS.danger },
-        { icon: '🏫', label: 'Schools in Zone', value: data.infrastructure?.schools?.length || 0, color: COLORS.warning },
-        { icon: '🌉', label: 'Bridges Exposed', value: data.infrastructure?.bridges?.length || 0, color: [249, 115, 22] },
-        { icon: '🚰', label: 'Water Treatment', value: data.infrastructure?.water_treatment?.length || 0, color: COLORS.cyan },
-        { icon: '🛣️', label: 'Roads Affected', value: `${data.roads_km || 0} km`, color: COLORS.lightGray },
+        { icon: '🏥', label: 'Hospitals at Risk', value: (infraGrouped.hospital || []).length || data.hospitals_at_risk || 0, color: COLORS.danger },
+        { icon: '🏫', label: 'Schools in Zone', value: (infraGrouped.school || []).length, color: COLORS.warning },
+        { icon: '🌉', label: 'Bridges Exposed', value: (infraGrouped.bridge || []).length, color: [249, 115, 22] },
+        { icon: '🚰', label: 'Water Treatment', value: (infraGrouped.water || infraGrouped.water_treatment || []).length, color: COLORS.cyan },
+        { icon: '🛣️', label: 'Roads Affected', value: `${data.roads_km_affected || 0} km`, color: COLORS.lightGray },
     ];
 
     const cardWidth = (CW - 8) / 5;
@@ -321,16 +330,16 @@ export async function generateReport(data, mapElement) {
     });
     y += 24;
 
-    // Infrastructure details table
+    // Infrastructure details table — iterate grouped types
     const infraTypes = [
-        { key: 'hospitals', label: 'Hospitals' },
-        { key: 'schools', label: 'Schools' },
-        { key: 'bridges', label: 'Bridges' },
-        { key: 'water_treatment', label: 'Water Treatment' },
+        { key: 'hospital', label: 'Hospitals' },
+        { key: 'school', label: 'Schools' },
+        { key: 'bridge', label: 'Bridges' },
+        { key: 'water', label: 'Water Treatment' },
     ];
 
     for (const type of infraTypes) {
-        const items = data.infrastructure?.[type.key] || [];
+        const items = infraGrouped[type.key] || [];
         if (items.length === 0) continue;
 
         doc.setFontSize(8);
@@ -344,7 +353,7 @@ export async function generateReport(data, mapElement) {
         setColor(doc, COLORS.medGray);
         doc.text('NAME', M + 3, y + 6.5);
         doc.text('COORDINATES', M + 110, y + 6.5);
-        doc.text('STATUS', M + 155, y + 6.5);
+        doc.text('RISK LEVEL', M + 155, y + 6.5);
         y += 9;
 
         const maxItems = Math.min(items.length, 5);
@@ -354,15 +363,17 @@ export async function generateReport(data, mapElement) {
             doc.setFontSize(7);
             doc.setFont('helvetica', 'normal');
             setColor(doc, COLORS.darkGray);
-            const name = (item.name || item.properties?.name || 'Unnamed').substring(0, 45);
+            const name = (item.name || 'Unnamed').substring(0, 45);
             doc.text(name, M + 3, y);
             setColor(doc, COLORS.lightGray);
-            const lat = item.lat?.toFixed(4) || item.geometry?.coordinates?.[1]?.toFixed(4) || '—';
-            const lon = item.lon?.toFixed(4) || item.geometry?.coordinates?.[0]?.toFixed(4) || '—';
+            const coords = item.coords || [];
+            const lat = coords[0]?.toFixed(4) || '—';
+            const lon = coords[1]?.toFixed(4) || '—';
             doc.text(`${lat}, ${lon}`, M + 110, y);
             doc.setFont('helvetica', 'bold');
-            setColor(doc, COLORS.danger);
-            doc.text('AT RISK', M + 155, y);
+            const riskColor = item.risk_level === 'CRITICAL' ? COLORS.critical : item.risk_level === 'HIGH' ? COLORS.danger : COLORS.warning;
+            setColor(doc, riskColor);
+            doc.text(item.risk_level || 'AT RISK', M + 155, y);
             y += 5;
         }
         if (items.length > 5) {

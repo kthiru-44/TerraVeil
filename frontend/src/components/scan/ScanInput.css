@@ -172,7 +172,7 @@
     background: rgba(255, 255, 255, 0.015);
     border: 1px dashed rgba(255, 255, 255, 0.06);
     border-radius: var(--radius-sm);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .si-field {
@@ -310,4 +310,90 @@
     .si-row-2 {
         grid-template-columns: 1fr;
     }
+}
+
+/* ── Geocoder Styles ── */
+.si-geo-loading {
+    position: absolute;
+    right: 10px;
+    top: 34px;
+    font-size: 10px;
+    color: rgba(192, 192, 192, 0.6);
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    animation: pulse-geo 1s ease-in-out infinite;
+}
+
+@keyframes pulse-geo {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.si-geo-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: rgba(16, 16, 20, 0.97);
+    border: 1px solid rgba(192, 192, 192, 0.12);
+    border-radius: var(--radius-sm);
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.si-geo-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.si-geo-item:hover {
+    background: rgba(192, 192, 192, 0.08);
+}
+
+.si-geo-item:last-child {
+    border-bottom: none;
+}
+
+.si-geo-name {
+    font-size: 13px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.si-geo-coords {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: rgba(192, 192, 192, 0.5);
+    letter-spacing: 0.05em;
+}
+
+.si-geo-selected {
+    padding: 8px 12px;
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: rgba(76, 175, 80, 0.9);
+    font-family: var(--font-mono);
+    margin-top: var(--space-2);
+    letter-spacing: 0.03em;
 }
