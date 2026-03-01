@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import LoginPage from './components/auth/LoginPage.jsx';
 import BootSequence from './components/boot/BootSequence.jsx';
-import OrbitalIntro from './components/animation/OrbitalIntro.jsx';
+import LoadingScreen from './components/scan/LoadingScreen.jsx';
 import HomePage from './components/home/HomePage.jsx';
+import AboutPage from './components/about/AboutPage.jsx';
 import ScanInput from './components/scan/ScanInput.jsx';
 import Dashboard from './components/dashboard/Dashboard.jsx';
 import { getRisk } from './services/api.js';
@@ -224,7 +225,13 @@ export default function App() {
         animDone.current = false;
         dataReady.current = false;
 
-        // Fire backend API call in parallel with orbital animation
+        // Ensure loading screen shows for minimum 3 seconds
+        setTimeout(() => {
+            animDone.current = true;
+            tryTransition();
+        }, 3000);
+
+        // Fire backend API call in parallel with loading screen
         const regionKey = config.selectedRegion || config.region;
         const dateParam = config.date_end;
         // Convert bbox array [west, south, east, north] to object
@@ -250,11 +257,6 @@ export default function App() {
             });
     }, [tryTransition]);
 
-    const handleScanAnimationComplete = useCallback(() => {
-        animDone.current = true;
-        tryTransition();
-    }, [tryTransition]);
-
     const handleNewScan = useCallback(() => {
         setAnalysisStep('input');
         setScanConfig(null);
@@ -273,9 +275,9 @@ export default function App() {
             {/* Boot Sequence */}
             {user && showBoot && <BootSequence onComplete={handleBootComplete} />}
 
-            {/* Orbital Intro (scan animation) — fullscreen overlay */}
+            {/* Loading Screen — fullscreen overlay */}
             {loggedIn && analysisStep === 'scanning' && (
-                <OrbitalIntro onComplete={handleScanAnimationComplete} scanConfig={scanConfig} />
+                <LoadingScreen regionLabel={scanConfig?.region || 'CUSTOM TARGET'} />
             )}
 
             {/* Main App Shell */}
@@ -309,6 +311,12 @@ export default function App() {
                                     onClick={() => setActiveTab('home')}
                                 >
                                     HOME
+                                </button>
+                                <button
+                                    className={`app-tab ${activeTab === 'about' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('about')}
+                                >
+                                    ABOUT
                                 </button>
                                 <button
                                     className={`app-tab ${activeTab === 'analysis' ? 'active' : ''}`}
@@ -354,6 +362,10 @@ export default function App() {
                     {/* Tab Content */}
                     {activeTab === 'home' && (
                         <HomePage onStartAnalysis={handleStartAnalysis} />
+                    )}
+
+                    {activeTab === 'about' && (
+                        <AboutPage onStartAnalysis={handleStartAnalysis} />
                     )}
 
                     {activeTab === 'analysis' && analysisStep === 'input' && (

@@ -22,19 +22,19 @@ import html2canvas from 'html2canvas';
 
 // ─── Color Palette ───────────────────────────────────────────────
 const COLORS = {
-    black: [15, 15, 20],
-    darkGray: [30, 30, 35],
-    medGray: [60, 60, 65],
-    lightGray: [140, 140, 150],
+    black: [15, 23, 42],      // Slate 900
+    darkGray: [51, 65, 85],   // Slate 700
+    medGray: [100, 116, 139], // Slate 500
+    lightGray: [148, 163, 184], // Slate 400
     white: [255, 255, 255],
-    silver: [200, 200, 210],
-    accent: [59, 130, 246],    // blue
-    success: [74, 222, 128],    // green
-    warning: [251, 191, 36],    // amber
-    danger: [248, 113, 113],   // red
-    critical: [239, 68, 68],     // bright red
-    purple: [168, 85, 247],    // ML purple
-    cyan: [34, 211, 238],    // satellite cyan
+    silver: [203, 213, 225],  // Slate 300
+    accent: [37, 99, 235],    // Blue 600
+    success: [22, 163, 74],   // Green 600
+    warning: [217, 119, 6],   // Amber 600
+    danger: [220, 38, 38],    // Red 600
+    critical: [185, 28, 28],  // Red 700
+    purple: [124, 58, 237],   // Violet 600
+    cyan: [8, 145, 178],      // Cyan 600
 };
 
 const RISK_COLORS = {
@@ -297,11 +297,11 @@ export async function generateReport(data, mapElement) {
 
     // Infrastructure summary cards
     const infraItems = [
-        { icon: '🏥', label: 'Hospitals at Risk', value: data.hospitals_at_risk || 0, color: COLORS.danger },
-        { icon: '🏫', label: 'Schools in Zone', value: data.infrastructure?.schools?.length || 0, color: COLORS.warning },
-        { icon: '🌉', label: 'Bridges Exposed', value: data.infrastructure?.bridges?.length || 0, color: [249, 115, 22] },
-        { icon: '🚰', label: 'Water Treatment', value: data.infrastructure?.water_treatment?.length || 0, color: COLORS.cyan },
-        { icon: '🛣️', label: 'Roads Affected', value: `${data.roads_km || 0} km`, color: COLORS.lightGray },
+        { label: 'Hospitals at Risk', value: data.hospitals_at_risk || 0, color: COLORS.danger },
+        { label: 'Schools in Zone', value: data.infrastructure?.schools?.length || 0, color: COLORS.warning },
+        { label: 'Bridges Exposed', value: data.infrastructure?.bridges?.length || 0, color: COLORS.warning },
+        { label: 'Water Treatment', value: data.infrastructure?.water_treatment?.length || 0, color: COLORS.cyan },
+        { label: 'Roads Affected', value: `${data.roads_km || 0} km`, color: COLORS.darkGray },
     ];
 
     const cardWidth = (CW - 8) / 5;

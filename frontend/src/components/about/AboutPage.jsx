@@ -88,22 +88,6 @@ export default function AboutPage({ onBack }) {
             <div className="about-bg-orb about-orb-2" />
             <div className="about-bg-orb about-orb-3" />
 
-            {/* Navbar */}
-            <nav className="about-nav">
-                <button className="about-back" onClick={onBack}>
-                    ← Back to Dashboard
-                </button>
-                <div className="about-nav-brand">
-                    <svg viewBox="0 0 24 24" className="about-nav-svg">
-                        <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(192,192,192,0.2)" strokeWidth="0.5" />
-                        <circle cx="12" cy="12" r="2" fill="#fff" />
-                        <circle cx="12" cy="2" r="1.2" fill="#c0c0c0" />
-                    </svg>
-                    <span className="about-nav-title">TERRAVEIL</span>
-                </div>
-                <div style={{ width: 160 }} />
-            </nav>
-
             {/* Content */}
             <div className="about-content">
 

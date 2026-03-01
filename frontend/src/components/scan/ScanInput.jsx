@@ -30,6 +30,11 @@ export default function ScanInput({ regionPresets, onLaunch }) {
     const [customLat, setCustomLat] = useState('');
     const [customLon, setCustomLon] = useState('');
 
+    // Geocode state
+    const [suggestions, setSuggestions] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
     const region = regionPresets[selectedRegion];
     const defStart = parseDate(region?.date_start);
     const defEnd = parseDate(region?.date_end);
@@ -49,6 +54,34 @@ export default function ScanInput({ regionPresets, onLaunch }) {
             setSDay(s.day); setSMonth(s.month); setSYear(s.year);
             setEDay(e.day); setEMonth(e.month); setEYear(e.year);
         }
+    };
+
+    const handleLocationChange = async (e) => {
+        const val = e.target.value;
+        setCustomLocation(val);
+        if (val.length < 3) {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+        setShowSuggestions(true);
+        setIsSearching(true);
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&limit=5`);
+            const data = await res.json();
+            setSuggestions(data);
+        } catch (err) {
+            console.error('Geocode error:', err);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSelectSuggestion = (s) => {
+        setCustomLocation(s.display_name);
+        setCustomLat(parseFloat(s.lat).toFixed(4));
+        setCustomLon(parseFloat(s.lon).toFixed(4));
+        setShowSuggestions(false);
     };
 
     const handleLaunch = () => {
@@ -112,9 +145,37 @@ export default function ScanInput({ regionPresets, onLaunch }) {
                     {/* Custom Location */}
                     {selectedRegion === 'custom' && (
                         <motion.div className="si-section si-custom" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                            <div className="si-field">
-                                <label className="si-label-sm">LOCATION NAME</label>
-                                <input type="text" className="si-input" placeholder="e.g. Mumbai, India" value={customLocation} onChange={(e) => setCustomLocation(e.target.value)} />
+                            <div className="si-field" style={{ position: 'relative' }}>
+                                <label className="si-label-sm">LOCATION NAME {isSearching && <span style={{ fontSize: '0.7rem', color: '#888', marginLeft: '10px' }}>Searching...</span>}</label>
+                                <input
+                                    type="text"
+                                    className="si-input"
+                                    placeholder="e.g. Mumbai, India"
+                                    value={customLocation}
+                                    onChange={handleLocationChange}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                    onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                                />
+                                {showSuggestions && suggestions.length > 0 && (
+                                    <div className="si-suggestions" style={{
+                                        position: 'absolute', top: '100%', left: 0, right: 0,
+                                        background: '#191920', border: '1px solid #333',
+                                        borderRadius: '6px', zIndex: 10, marginTop: '4px',
+                                        maxHeight: '200px', overflowY: 'auto',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                                    }}>
+                                        {suggestions.map((s, i) => (
+                                            <div key={i} className="si-suggestion-item"
+                                                style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '0.85rem', color: '#cbd5e1', borderBottom: i < suggestions.length - 1 ? '1px solid #2a2a30' : 'none' }}
+                                                onClick={() => handleSelectSuggestion(s)}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = '#2a2a35'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                {s.display_name}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="si-row-2">
                                 <div className="si-field">

@@ -105,14 +105,15 @@ The dashboard is built with a **premium glassmorphic design language** — silve
 |-----------|---------|
 | **Login Portal** | Themed authentication with orbital-grade security branding |
 | **Boot Sequence** | Cinematic system initialization with real-time progress indicators |
-| **Home Dashboard** | Mission overview, capabilities grid, and quick-launch analysis |
-| **Scan Configuration** | Region selector (preset + custom), date range picker, scan launcher |
-| **Orbital Animation** | Dynamic satellite scan visualization with region-specific SVG maps |
+| **Home Landing** | Single-view hero dashboard for quick-launch satellite analysis |
+| **About Tab** | Dedicated view for TerraVeil's mission, technology stack, and pricing models |
+| **Scan Configuration** | Nominatim Geocode autocomplete for custom regions, plus date filters |
+| **Processing UI** | Real-time visual terminal logs (SSE simulation) during GEE data fetching |
 | **Results Dashboard** | Interactive Leaflet map, flood overlays, risk cards, infrastructure markers |
+| **PDF Reports** | Professionally styled exported PDF reports with jsPDF and clean typography |
 | **Forecast Panel** | 72-hour precipitation, temperature, wind speed, and vulnerability trajectory |
 | **Node Telemetry** | Real-time COSMEON node status, consensus metrics, and bandwidth stats |
 | **Mission Logs** | Scrollable terminal-style log viewer for pipeline execution details |
-| **About Page** | Full-page overview of TerraVeil's mission, team, and technology |
 
 <br />
 
