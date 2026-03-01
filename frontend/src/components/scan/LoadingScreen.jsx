@@ -63,9 +63,9 @@ export default function LoadingScreen({ regionLabel }) {
 
                 <div className="ls-terminal">
                     <div className="ls-terminal-header">
-                        <span className="ls-dot" style={{ background: '#ef4444' }} />
-                        <span className="ls-dot" style={{ background: '#f59e0b' }} />
-                        <span className="ls-dot" style={{ background: '#22c55e' }} />
+                        <span className="ls-dot" style={{ background: '#333' }} />
+                        <span className="ls-dot" style={{ background: '#333' }} />
+                        <span className="ls-dot" style={{ background: '#333' }} />
                         <span className="ls-term-title">TERRAVEIL_EDGE_TERMINAL</span>
                     </div>
                     <div className="ls-terminal-body">

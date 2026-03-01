@@ -4,7 +4,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: #0f131a;
+    background: #000;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -15,8 +15,11 @@
 
 .ls-overlay {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(circle at center, rgba(37, 99, 235, 0.1) 0%, transparent 60%);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.03) 0%, transparent 60%);
     z-index: 1;
 }
 
@@ -39,82 +42,87 @@
 
 .ls-spinner-orbit {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border: 2px dashed rgba(255, 255, 255, 0.2);
-    border-top-color: #3b82f6;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #fff;
     border-radius: 50%;
     animation: ls-spin 2s linear infinite;
 }
 
 .ls-spinner-core {
     position: absolute;
-    top: 50%; left: 50%;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
-    width: 12px;
-    height: 12px;
-    background: #3b82f6;
+    width: 8px;
+    height: 8px;
+    background: #fff;
     border-radius: 50%;
-    box-shadow: 0 0 20px #3b82f6;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
     animation: ls-pulse 1.5s ease-in-out infinite alternate;
 }
 
 .ls-title {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 700;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.3em;
     margin: 0;
-    color: #e2e8f0;
+    color: #fff;
+    text-transform: uppercase;
 }
 
 .ls-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 400;
-    letter-spacing: 0.1em;
-    color: #3b82f6;
+    letter-spacing: 0.15em;
+    color: #888;
     margin: 8px 0 40px 0;
     text-transform: uppercase;
 }
 
 .ls-terminal {
     width: 100%;
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 8px;
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-radius: 4px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .ls-terminal-header {
-    background: #0f172a;
-    padding: 10px 16px;
+    background: #111;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
     gap: 6px;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid #222;
 }
 
 .ls-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
 }
 
 .ls-term-title {
-    margin-left: 12px;
-    font-size: 0.75rem;
-    color: #94a3b8;
+    margin-left: 10px;
+    font-size: 0.7rem;
+    color: #555;
     font-family: 'JetBrains Mono', 'Courier New', monospace;
+    letter-spacing: 0.05em;
 }
 
 .ls-terminal-body {
     padding: 16px;
-    height: 240px;
+    height: 220px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     font-family: 'JetBrains Mono', 'Courier New', monospace;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
 }
 
 .ls-log-line {
@@ -123,32 +131,51 @@
 }
 
 .ls-log-time {
-    color: #64748b;
+    color: #444;
 }
 
 .ls-log-text {
-    color: #22c55e;
+    color: #ccc;
 }
 
 .ls-cursor {
-    width: 8px;
-    height: 14px;
-    background: #22c55e;
+    width: 6px;
+    height: 12px;
+    background: #fff;
     margin-top: 4px;
     animation: ls-blink 1s step-end infinite;
 }
 
 @keyframes ls-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes ls-pulse {
-    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
-    100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    0% {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 1;
+    }
 }
 
 @keyframes ls-blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
 }
